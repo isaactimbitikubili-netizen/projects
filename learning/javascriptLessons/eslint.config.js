@@ -1,0 +1,22 @@
+import js from "@eslint/js";
+import globals from "globals";
+
+export default [
+  js.configs.recommended,
+  {
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
+    },
+    rules: {
+      "no-unused-vars": "warn",
+      semi: ["warn", "always"],
+      quotes: ["warn", "double"],
+      eqeqeq: "warn",
+      "no-trailing-spaces": "warn",
+      "eol-last": ["warn", "always"],
+    },
+  },
+];
