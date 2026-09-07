@@ -1,0 +1,9 @@
+# Git-only mode 2026-09-07 (no flash drive)
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.log
+git-sync.log
+*.gnucash
+*.csv
