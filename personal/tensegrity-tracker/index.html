@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tensegrity Tracker v2 – First-Principles Baseline Log</title>
+<style>
+  :root {
+    --bg: #0f1419; --card: #1a2230; --card2: #222d42; --inner: #0b111c;
+    --accent: #5eead4; --accent2: #a78bfa;
+    --text: #e8eef6; --muted: #94a3b8;
+    --good: #34d399; --warn: #fbbf24; --bad: #f87171;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    max-width: 900px; margin: 0 auto; padding: 16px 16px 60px; line-height:1.5; }
+  header { text-align:center; margin: 12px 0 8px; }
+  header h1 { margin:0; font-size:1.7rem; letter-spacing:-0.02em; }
+  header h1 span { color: var(--accent); }
+  header p { color: var(--muted); margin:6px 0 0; font-size:0.92rem; }
+  .calm-banner { background: #0e2a26; border:1px solid #1f5c55; border-radius: var(--radius);
+    padding:12px 14px; margin:14px 0; font-size:0.9rem; }
+  .calm-banner b { color: var(--accent); }
+  nav { display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+    margin:12px 0; position:sticky; top:0; background:var(--bg); padding:10px 0; z-index:10; }
+  nav button { border:1px solid #334155; background:var(--card); color:var(--text);
+    padding:9px 14px; border-radius:999px; cursor:pointer; font-size:0.9rem; }
+  nav button.active { background:var(--accent); color:#062e29; border-color:var(--accent); font-weight:700; }
+  .card { background:var(--card); border:1px solid #2a364e; border-radius:var(--radius); padding:18px; margin:12px 0; }
+  .card h2 { margin:0 0 6px; font-size:1.15rem; }
+  .card h2 small, .sub { display:block; font-weight:400; color:var(--muted); font-size:0.85rem; margin-top:4px; line-height:1.45; }
+  .subcard { background: var(--inner); border:1px solid #2a364e; border-radius:12px; padding:14px; margin:14px 0; }
+  .subcard h3 { margin:0 0 4px; font-size:1.02rem; }
+  .principle { border-left:4px solid var(--accent); padding:8px 12px; background:#0e2a26; border-radius:0 10px 10px 0; font-size:0.88rem; margin:10px 0; }
+  .scrutiny { border-left:4px solid var(--warn); padding:8px 12px; background:#2a230f; border-radius:0 10px 10px 0; font-size:0.87rem; margin:10px 0; }
+  .meta { border-left:4px solid var(--accent2); padding:8px 12px; background:#1e1b3a; border-radius:0 10px 10px 0; font-size:0.87rem; margin:10px 0; }
+  label { display:block; margin:12px 0 4px; font-size:0.9rem; color:#cbd5e1; font-weight:600; }
+  input, select, textarea { width:100%; padding:10px 12px; border-radius:10px;
+    border:1px solid #334155; background:#0b111c; color:var(--text); font-size:1rem; }
+  textarea { min-height:56px; resize:vertical; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:600px){ .row{grid-template-columns:1fr;} }
+  .btn { display:inline-block; margin-top:14px; padding:12px 18px; border-radius:12px; border:0;
+    cursor:pointer; font-weight:700; font-size:1rem; background:var(--accent); color:#062e29; width:100%; }
+  .btn.secondary { background:var(--card2); color:var(--text); border:1px solid #334155; width:auto; margin:6px 8px 0 0; padding:9px 14px; font-size:0.9rem; }
+  .btn.danger { background:transparent; border:1px solid var(--bad); color:var(--bad); width:auto; padding:9px 14px; font-size:0.9rem; }
+  .btn.calmb { background:transparent; border:1px solid var(--accent); color:var(--accent); width:100%; padding:11px; font-size:0.95rem; margin-top:10px;}
+  .feedback { margin-top:12px; padding:12px; border-radius:10px; background:#0b111c;
+    border-left:4px solid var(--accent2); font-size:0.92rem; line-height:1.55; display:none; }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:12px 0; }
+  @media (max-width:600px){ .stats{grid-template-columns:1fr;} }
+  .stat { background:var(--card); border:1px solid #2a364e; border-radius:12px; padding:12px; text-align:center; }
+  .stat .n { font-size:1.5rem; font-weight:800; }
+  .stat .l { font-size:0.8rem; color:var(--muted); margin-top:4px; }
+  table { width:100%; border-collapse:collapse; font-size:0.84rem; margin-top:10px; }
+  th, td { text-align:left; padding:8px; border-bottom:1px solid #2a364e; vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
+  .pill.squat,.pill.neuro-morning { background:#134e4a; color:#5eead4; }
+  .pill.wall,.pill.hang { background:#4c1d95; color:#ddd6fe; }
+  .pill.heart,.pill.silence { background:#7c2d12; color:#fed7aa; }
+  .pill.balance,.pill.bio { background:#1e3a5f; color:#bfdbfe; }
+  .hidden { display:none !important; }
+  .muted { color:var(--muted); font-size:0.87rem; }
+  details { margin-top:8px; } details summary { cursor:pointer; color:var(--accent); font-size:0.9rem; }
+  .timer { font-variant-numeric:tabular-nums; font-size:2rem; font-weight:800; text-align:center; margin:8px 0; }
+  .timer-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
+  .timer-row button { padding:8px 14px; border-radius:10px; border:1px solid #334155; background:var(--card2); color:var(--text); cursor:pointer; font-weight:700; }
+  footer { text-align:center; color:var(--muted); font-size:0.8rem; margin-top:24px; }
+  input[type="range"]{ padding:0; } .range-val{ color:var(--accent); font-weight:800; }
+  .suggest { background:#0e2a26; border:1px solid #1f5c55; border-radius:12px; padding:12px 14px; margin:10px 0; font-size:0.92rem; }
+  .checklist li { margin:6px 0; font-size:0.9rem; }
+  ol.tutor li, ul.tutor li { margin:8px 0; font-size:0.92rem; }
+  code { background:#0b111c; padding:1px 6px; border-radius:6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>◈ <span>Tensegrity</span> Tracker v2</h1>
+  <p>First-principles baselines · calm data · offline in your browser (localStorage).</p>
+</header>
+
+<div class="calm-banner">
+  📏 <b>Data rule #1:</b> one number is noise. Look for patterns across <b>7+ logs</b>, with context (sleep · heat · stress · illness).
+  Missing a day is data, not failure — don't backfill anxiously.
+  <br><span class="muted">Educational tool only, not medical advice. If worried, talk to a clinician.</span>
+</div>
+
+<nav>
+  <button data-tab="dashboard" class="active">📊 Dashboard</button>
+  <button data-tab="neuro">🧠 Neuro</button>
+  <button data-tab="biomech">🏗️ Biomech</button>
+  <button data-tab="bio">🌿 Bio</button>
+  <button data-tab="guide">🧭 Guide</button>
+  <button data-tab="history">📜 History</button>
+</nav>
+
+<!-- ================= DASHBOARD ================= -->
+<section id="tab-dashboard" class="card">
+  <h2>System check <small>Nervous system → structure → biology. In that order. Your body adapts only when the layer below is stable.</small></h2>
+  <div class="stats">
+    <div class="stat"><div class="n" id="stat-total">0</div><div class="l">total logs</div></div>
+    <div class="stat"><div class="n" id="stat-streak">0 🔥</div><div class="l">day streak</div></div>
+    <div class="stat"><div class="n" id="stat-week">0</div><div class="l">logs last 7 days</div></div>
+  </div>
+
+  <div class="suggest" id="today-suggest">Log a few baselines and I'll suggest where to focus today.</div>
+
+  <div id="latest-cards"></div>
+
+  <div class="scrutiny">
+    🛟 <b>Anti-spiral checklist — read before interpreting:</b>
+    <ol class="checklist" style="margin:8px 0 0; padding-left:20px">
+      <li><b>Story vs. data:</b> write the number, then write the story you're telling about it. They are different things.</li>
+      <li><b>n &lt; 7?</b> Too early to conclude. File it and keep collecting.</li>
+      <li><b>Context?</b> Sleep, heat/hydration, stress, illness, caffeine explain most single-day dips.</li>
+      <li><b>Range, not verdict:</b> "12–18s this week" beats "I failed / I'm dysregulated."</li>
+      <li><b>Kind next step:</b> pick the smallest restorative action, not punishment.</li>
+    </ol>
+    <button class="btn calmb" id="spiral-btn">🫧 I'm spiraling — walk me through it</button>
+    <div id="spiral-walk" class="hidden" style="margin-top:10px">
+      <p><b>1. Pause (60s).</b> Feet flat, slow exhale longer than inhale ×4. You don't need to fix anything right now.</p>
+      <p><b>2. Name it:</b> "I'm noticing the thought that ___ . The actual data point is ___ ."</p>
+      <p><b>3. Context scan:</b> sleep last night? water + electrolytes today? heat? stress/overload? coming sick?</p>
+      <p><b>4. Zoom out:</b> what does the last 7–14 days show, not today alone?</p>
+      <p><b>5. One kind step:</b> water, shade/rest, early bed, gentle walk, or ask someone — not an intense workout to "make up for it."</p>
+      <p class="muted">If checking urges keep looping, close the app and return tomorrow. The data will wait.</p>
+    </div>
+  </div>
+
+  <div>
+    <button class="btn secondary" id="export-csv">⬇ CSV</button>
+    <button class="btn secondary" id="export-json">⬇ JSON</button>
+    <button class="btn danger" id="clear-all">🗑 Clear all</button>
+  </div>
+</section>
+
+<!-- ================= NEURO ================= -->
+<section id="tab-neuro" class="card hidden">
+  <h2>🧠 Neurological baseline <small>Autonomic state first. Your nervous system dictates capacity — if it's depleted (ADHD burnout is common), heavy load causes regression, not adaptation. Measure before you load.</small></h2>
+
+  <!-- Morning HRV/RHR -->
+  <div class="subcard">
+    <h3>A. Morning check — HRV / RHR on waking</h3>
+    <div class="principle">⚛️ <b>First principle:</b> HRV &amp; resting HR reflect sympathetic vs. parasympathetic balance. Trend matters, not one morning. A personal rise in RHR (~+7–10 bpm over your 7-day average) or HRV dip + fatigue = system asking for down-regulation, not intensity.</div>
+    <div class="scrutiny">🔍 <b>Scrutiny cue:</b> single mornings are noisy (bad sleep, heat, dehydration, alcohol, late caffeine, illness). Never judge one reading. Need 7+ mornings. Same time, same position (sitting/lying), before phone/coffee.</div>
+    <form id="form-neuro-morning">
+      <div class="row">
+        <div><label>Date</label><input type="date" name="date" required /></div>
+        <div><label>Resting HR (bpm, on waking)</label><input type="number" name="rhr" min="35" max="130" placeholder="e.g. 62" /></div>
+      </div>
+      <div class="row">
+        <div><label>HRV (ms / RMSSD — if you track it)</label><input type="number" name="hrv" min="5" max="300" placeholder="optional" /></div>
+        <div><label>Sleep last night (hours)</label><input type="number" name="sleepH" min="0" max="16" step="0.5" placeholder="e.g. 7" /></div>
+      </div>
+      <div class="row">
+        <div><label>Readiness 1–10 <span class="range-val" id="nm-ready-val">5</span></label><input type="range" name="readiness" min="1" max="10" value="5" id="nm-ready" /></div>
+        <div><label>Stress / load 1–5 (1 calm → 5 fried)</label><select name="stress"><option value="1">1 — calm</option><option value="2" selected>2 — okay</option><option value="3">3 — loaded</option><option value="4">4 — stretched</option><option value="5">5 — fried</option></select></div>
+      </div>
+      <label>Notes / context (heat, illness, caffeine, late night…)</label>
+      <textarea name="notes" placeholder="e.g. hot night, woke 2×, coffee late yesterday…"></textarea>
+      <button class="btn" type="submit">Save morning check</button>
+      <div class="feedback" id="fb-neuro-morning"></div>
+    </form>
+  </div>
+
+  <!-- Silence test -->
+  <div class="subcard">
+    <h3>B. 10-min silence sit — dopamine / stillness capacity</h3>
+    <div class="principle">⚛️ <b>First principle:</b> can you sit in a dark, silent room 10 min without phone or stimming? This probes baseline arousal + interoception. Difficulty ≠ personal failure — it's information that the system currently needs parasympathetic practice before load-bearing.</div>
+    <div class="scrutiny">🔍 <b>Scrutiny cue:</b> ADHD/ASD brains find stillness harder by design. Score urges, don't moralize them. Track urge intensity over weeks. Environment matters (noise, hunger, heat).</div>
+    <div class="meta">🧩 <b>Metacognition prompt:</b> "What did I feel at minute 2 vs. minute 8? What strategy did I use — breath, noticing, counting?" You're training observation, not perfection.</div>
+    <div class="card" style="background:#060b14; margin:10px 0">
+      <div class="timer" id="silence-timer">10:00</div>
+      <div class="timer-row">
+        <button type="button" id="silence-start">▶ Start 10-min</button>
+        <button type="button" id="silence-reset">↺ Reset</button>
+      </div>
+      <div class="muted" style="text-align:center">Dark silent room. Phone away. Notice urges without obeying them.</div>
+    </div>
+    <form id="form-silence">
+      <div class="row">
+        <div><label>Date</label><input type="date" name="date" required /></div>
+        <div><label>Completed 10 min?</label><select name="completed"><option value="yes">Yes — full 10</option><option value="partial">Partial</option><option value="no">No — stopped early</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Reached for phone?</label><select name="phone"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div><label>Stimmed?</label><select name="stim"><option value="no">No / minimal</option><option value="yes-mild">Yes — mild</option><option value="yes-strong">Yes — needed it</option></select></div>
+      </div>
+      <label>Urge intensity 1–10 <span class="range-val" id="sil-urge-val">5</span></label>
+      <input type="range" name="urge" min="1" max="10" value="5" id="sil-urge" />
+      <label>Notes (when hardest, what helped…)</label>
+      <textarea name="notes" placeholder="e.g. hardest min 3–4, slow exhale helped…"></textarea>
+      <button class="btn" type="submit">Save silence sit</button>
+      <div class="feedback" id="fb-silence"></div>
+    </form>
+  </div>
+
+  <!-- Heart interoception (moved from v1) -->
+  <div class="subcard">
+    <h3>C. Interoceptive heart test — vagal gating</h3>
+    <div class="principle">⚛️ <b>First principle:</b> feeling your heartbeat without touch = interoception + vagal tone. For ADHD/ASD this connection supports emotional regulation. Post-exercise signal usually appears before resting signal — that's expected order, not failure.</div>
+    <div class="scrutiny">🔍 <b>Scrutiny cue:</b> track confidence 1–10 over time, not yes/no verdicts. Anxiety, caffeine, noise all gate the signal.</div>
+    <div class="card" style="background:#060b14; margin:10px 0">
+      <div class="timer" id="heart-timer">02:00</div>
+      <div class="timer-row">
+        <button type="button" id="heart-start">▶ Start 2-min</button>
+        <button type="button" id="heart-reset">↺ Reset</button>
+      </div>
+      <div class="muted" style="text-align:center">Sit still, notice chest / neck / fingertips.</div>
+    </div>
+    <form id="form-heart">
+      <div class="row">
+        <div><label>Date</label><input type="date" name="date" required /></div>
+        <div><label>Felt heartbeat at rest?</label><select name="feltRest"><option value="yes">Yes</option><option value="no">No</option><option value="unsure">Unsure / faint</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Rest confidence 1–10 <span class="range-val" id="heart-rest-val">5</span></label><input type="range" name="confRest" min="1" max="10" value="5" id="heart-rest" /></div>
+        <div><label>Where felt? (rest)</label><select name="whereRest"><option>Chest</option><option>Neck</option><option>Fingertips</option><option>Multiple</option><option>Nowhere</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Felt after 20 jacks?</label><select name="feltPost"><option value="yes">Yes</option><option value="no">No</option><option value="unsure">Unsure / faint</option></select></div>
+        <div><label>Post confidence 1–10 <span class="range-val" id="heart-post-val">5</span></label><input type="range" name="confPost" min="1" max="10" value="5" id="heart-post" /></div>
+      </div>
+      <label>Notes</label>
+      <textarea name="notes" placeholder="e.g. easier in neck after jacks…"></textarea>
+      <button class="btn" type="submit">Save heart test</button>
+      <div class="feedback" id="fb-heart"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ================= BIOMECH ================= -->
+<section id="tab-biomech" class="card hidden">
+  <h2>🏗️ Biomechanical baseline <small>Don't test 1-rep max. Test structural integrity: vestibular + proprioception + fascial elasticity + joint centration.</small></h2>
+
+  <div class="subcard">
+    <h3>A. Blind single-leg stand — vestibular + proprioception</h3>
+    <div class="principle">⚛️ <b>First principle:</b> eyes closed removes vision; balance must come from inner ear + foot proprioceptors + cerebellum. Under ~15s suggests foot/ankle foundation work first. Test barefoot, safe space, arms crossed.</div>
+    <div class="scrutiny">🔍 <b>Scrutiny cue:</b> time varies with fatigue, surface, shoes, illness, heat. Always test same conditions. Compare left vs. right and weekly range, not one wobble.</div>
+    <div class="card" style="background:#060b14; margin:10px 0">
+      <div class="timer" id="bal-timer">00:00</div>
+      <div class="timer-row">
+        <button type="button" id="bal-start">▶ Start</button>
+        <button type="button" id="bal-stop">⏸ Stop</button>
+        <button type="button" id="bal-reset">↺ Reset</button>
+        <button type="button" id="bal-use-L">Use → Left</button>
+        <button type="button" id="bal-use-R">Use → Right</button>
+      </div>
+    </div>
+    <form id="form-balance">
+      <div class="row">
+        <div><label>Date</label><input type="date" name="date" required /></div>
+        <div><label>Surface / footwear</label><select name="surface"><option>Barefoot · hard floor</option><option>Barefoot · mat</option><option>Shoes · hard floor</option><option>Grass / uneven</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Left leg (sec, eyes closed)</label><input type="number" name="leftSec" min="0" max="300" placeholder="e.g. 12" required /></div>
+        <div><label>Right leg (sec, eyes closed)</label><input type="number" name="rightSec" min="0" max="300" placeholder="e.g. 18" required /></div>
+      </div>
+      <label>Notes (which side, wobble direction, foot shift…)</label>
+      <textarea name="notes" placeholder="e.g. left ankle wobbles inward…"></textarea>
+      <button class="btn" type="submit">Save balance test</button>
+      <div class="feedback" id="fb-balance"></div>
+    </form>
+  </div>
+
+  <div class="subcard">
+    <h3>B. Deep primal squat — fascial elasticity + ankle dorsiflexion</h3>
+    <div class="principle">⚛️ <b>First principle:</b> heels-down deep squat tests posterior-chain fascial elasticity + ankle dorsiflexion + hip health. New baseline goal: <b>5 min</b> comfortable (v1 was 3 min — your old logs still count).</div>
+    <div class="scrutiny">🔍 <b>Scrutiny cue:</b> depth and comfort change with warm-up, footwear, fatigue, ankle stiffness in the morning. Support (doorframe) is a valid progression, not cheating.</div>
+    <div class="card" style="background:#060b14; margin:10px 0">
+      <div class="timer" id="squat-timer">00:00</div>
+      <div class="timer-row">
+        <button type="button" id="squat-start">▶ Start</button>
+        <button type="button" id="squat-stop">⏸ Stop</button>
+        <button type="button" id="squat-reset">↺ Reset</button>
+        <button type="button" id="squat-use">Use time ↓</button>
+      </div>
+      <div class="muted" style="text-align:center">Feet shoulder-width. Support is allowed while building up.</div>
+    </div>
+    <form id="form-squat">
+      <div class="row">
+        <div><label>Date</label><input type="date" name="date" required /></div>
+        <div><label>Max hold (seconds)</label><input type="number" name="holdSec" min="0" max="600" placeholder="e.g. 95" required /></div>
+      </div>
+      <div class="row">
+        <div><label>Heels stayed down?</label><select name="heelsDown"><option value="yes">Yes — heels down</option><option value="no">No — heels lifted</option></select></div>
+        <div><label>Fell backward?</label><select name="fallBack"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Knees caved?</label><select name="kneesCave"><option value="no">No — tracked over toes</option><option value="yes">Yes — caved</option></select></div>
+        <div><label>Comfort 1–10 <span class="range-val" id="squat-comfort-val">5</span></label><input type="range" name="comfort" min="1" max="10" value="5" id="squat-comfort" /></div>
+      </div>
+      <label>Notes (support used, depth…)</label>
+      <textarea name="notes" placeholder="e.g. held doorframe, calves tight…"></textarea>
+      <button class="btn" type="submit">Save squat log</button>
+      <div class="feedback" id="fb-squat"></div>
+    </form>
+  </div>
+
+  <div class="subcard">
+    <h3>C. Dead hang — grip + shoulder centration</h3>
+    <div class="principle">⚛️ <b>First principle:</b> max hang tests grip (correlates with nervous-system health) + shoulder joint centration. Hang from a secure bar, active shoulders (don't shrug to ears), breathe.</div>
+    <div class="scrutiny">🔍 <b>Scrutiny cue:</b> grip varies hugely with sweat/heat, bar thickness, skin, fatigue. Log conditions. Stop on sharp shoulder pain — discomfort in forearms is expected, joint pain is a stop signal.</div>
+    <div class="card" style="background:#060b14; margin:10px 0">
+      <div class="timer" id="hang-timer">00:00</div>
+      <div class="timer-row">
+        <button type="button" id="hang-start">▶ Start</button>
+        <button type="button" id="hang-stop">⏸ Stop</button>
+        <button type="button" id="hang-reset">↺ Reset</button>
+        <button type="button" id="hang-use">Use time ↓</button>
+      </div>
+    </div>
+    <form id="form-hang">
+      <div class="row">
+        <div><label>Date</label><input type="date" name="date" required /></div>
+        <div><label>Max hang (seconds)</label><input type="number" name="hangSec" min="0" max="600" placeholder="e.g. 30" required /></div>
+      </div>
+      <div class="row">
+        <div><label>Grip ending</label><select name="grip"><option value="held">Held — let go deliberately</option><option value="slipped">Slipped — grip gave out</option><option value="shoulder">Stopped — shoulder discomfort</option><option value="skin">Stopped — skin / hands</option></select></div>
+        <div><label>Shoulder discomfort 0–10 <span class="range-val" id="hang-pain-val">2</span></label><input type="range" name="pain" min="0" max="10" value="2" id="hang-pain" /></div>
+      </div>
+      <label>Notes (bar type, active shoulders?…)</label>
+      <textarea name="notes" placeholder="e.g. thick bar, sweaty, shoulders shrugged…"></textarea>
+      <button class="btn" type="submit">Save dead hang</button>
+      <div class="feedback" id="fb-hang"></div>
+    </form>
+  </div>
+
+  <div class="subcard">
+    <h3>D. Wall angel — thoracic + shoulder centration</h3>
+    <div class="principle">⚛️ <b>First principle:</b> back to wall (heels, glutes, upper back, head). Goalpost → Y without low-back arching. Tests thoracic extension + pec length + deep neck flexors ("upper-cross" from desk/tech).</div>
+    <div class="scrutiny">🔍 <b>Scrutiny cue:</b> morning stiffness vs. post-walk differ. Compare same time of day. Partial contact is a starting point with a clear progression.</div>
+    <form id="form-wall">
+      <div class="row">
+        <div><label>Date</label><input type="date" name="date" required /></div>
+        <div><label>Arms touched wall?</label><select name="armsTouch"><option value="full">Yes — full contact</option><option value="partial">Partially</option><option value="no">No</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Low back arched?</label><select name="backArch"><option value="no">No — stayed flat</option><option value="yes">Yes — arched</option></select></div>
+        <div><label>Reach</label><select name="reach"><option value="Y">Full Y overhead</option><option value="partial-Y">Partway to Y</option><option value="goalpost">Only goalpost (90°)</option><option value="below">Below 90°</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Tightness 0–10 <span class="range-val" id="wall-pain-val">3</span></label><input type="range" name="pain" min="0" max="10" value="3" id="wall-pain" /></div>
+        <div><label>Reps</label><input type="number" name="reps" min="0" max="50" value="5" /></div>
+      </div>
+      <label>Notes</label>
+      <textarea name="notes" placeholder="e.g. left shoulder lifts…"></textarea>
+      <button class="btn" type="submit">Save wall angel</button>
+      <div class="feedback" id="fb-wall"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ================= BIO ================= -->
+<section id="tab-bio" class="card hidden">
+  <h2>🌿 Biological baseline <small>Environmental integration. In Uganda's equatorial heat, hydration + minerals + sleep are usually the bottleneck — fatigue is more often cellular hydration failure than lack of fitness.</small></h2>
+  <div class="principle">⚛️ <b>First principle:</b> sleep architecture + digestion + water/electrolytes gate everything above. Fix order on fatigued days: <b>water → electrolytes → shade/rest → sleep tonight → train tomorrow.</b> Don't interpret performance before checking these.</div>
+  <div class="scrutiny">🔍 <b>Scrutiny cue:</b> heat, sweat, alcohol, late heavy meals, and poor sleep explain most "I got worse" days. Log them so your brain can't skip to self-blame.</div>
+  <div class="meta">🧩 <b>Metacognition prompt:</b> "If a friend showed me this log, would I say they're unfit — or hot, tired, and under-hydrated?"</div>
+  <form id="form-bio">
+    <div class="row">
+      <div><label>Date</label><input type="date" name="date" required /></div>
+      <div><label>Sleep hours</label><input type="number" name="sleepH" min="0" max="16" step="0.5" placeholder="e.g. 7" /></div>
+    </div>
+    <div class="row">
+      <div><label>Sleep quality 1–10 <span class="range-val" id="bio-sq-val">5</span></label><input type="range" name="sleepQ" min="1" max="10" value="5" id="bio-sq" /></div>
+      <div><label>Fatigue now 1–10 <span class="range-val" id="bio-fat-val">5</span></label><input type="range" name="fatigue" min="1" max="10" value="5" id="bio-fat" /></div>
+    </div>
+    <div class="row">
+      <div><label>Water today (litres)</label><input type="number" name="water" min="0" max="10" step="0.25" placeholder="e.g. 2.5" /></div>
+      <div><label>Electrolytes / minerals?</label><select name="lytes"><option value="no">No</option><option value="yes">Yes</option><option value="food">Via food (fruit/salt/soup…)</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Digestion</label><select name="gut"><option>Good</option><option>Bloated</option><option>Heavy / slow</option><option>Loose</option><option>Nauseous in heat</option></select></div>
+      <div><label>Heat / sun exposure</label><select name="heat"><option>Mild</option><option>Moderate</option><option>High — lots of sweat</option></select></div>
+    </div>
+    <label>Notes (meals, alcohol, caffeine timing, wake-ups…)</label>
+    <textarea name="notes" placeholder="e.g. late heavy meal, 2 coffees after 15:00…"></textarea>
+    <button class="btn" type="submit">Save bio log</button>
+    <div class="feedback" id="fb-bio"></div>
+  </form>
+</section>
+
+<!-- ================= GUIDE ================= -->
+<section id="tab-guide" class="card hidden">
+  <h2>🧭 First-principles tutor <small>How to think, not just what to log. Built for deliberate metacognition without spirals.</small></h2>
+
+  <div class="subcard">
+    <h3>The stack (order matters)</h3>
+    <ol class="tutor">
+      <li><b>🧠 Neuro first:</b> morning RHR/HRV + stillness + interoception. If the nervous system is depleted, load causes <i>regression</i>. Prescription: down-regulate (slow exhale, walk, shade, sleep) before barbells.</li>
+      <li><b>🏗️ Structure second:</b> balance → squat → hang → wall angel. No 1RM until joints centre and feet sense the ground. Under ~15s blind stand = foot/ankle foundation. Short hang + shoulder pain = hang less, scap work more.</li>
+      <li><b>🌿 Biology always:</b> sleep + water + electrolytes + digestion. Equatorial rule: if fatigued, check hydration/minerals <i>before</i> fitness story.</li>
+    </ol>
+  </div>
+
+  <div class="subcard">
+    <h3>Ask like a first-principles thinker (copy these into Notes)</h3>
+    <ul class="tutor">
+      <li><b>System:</b> what system am I actually testing — arousal, vestibular, fascia, grip, hydration?</li>
+      <li><b>Confounders:</b> sleep? heat/sweat? water/lytes? stress/illness? caffeine? time of day? surface/bar?</li>
+      <li><b>Base rate:</b> what's my 7-day range? Is today inside it (= noise) or outside it twice in a row (= signal)?</li>
+      <li><b>Smallest next test:</b> what's the tiniest change that would test my hypothesis (e.g. +0.5L water + lytes for 3 days)?</li>
+      <li><b>What would falsify my worry?</b> "If my RHR is back within 3 bpm after 2 good nights, it was fatigue, not decline."</li>
+    </ul>
+  </div>
+
+  <div class="subcard">
+    <h3>Decision tree — what do I do today?</h3>
+    <ol class="tutor">
+      <li>RHR +7–10 over your average <b>or</b> fatigue ≥7 <b>or</b> sick? → <b>Restore:</b> water + lytes, shade walk, early bed. No hard training. Log and release.</li>
+      <li>Otherwise, blind stand &lt;15s? → <b>Foundation:</b> barefoot balance + calf/ankle + short supported squats.</li>
+      <li>Otherwise, water &lt;2L in heat or no lytes + headache/fatigue? → <b>Rehydrate:</b> water + electrolytes / salty soup + fruit before training.</li>
+      <li>Otherwise → <b>Build:</b> practise one quality: squat depth, hang time, wall angels, or stillness.</li>
+    </ol>
+    <p class="muted">The Dashboard suggestion box applies this tree to your latest logs automatically.</p>
+  </div>
+
+  <div class="subcard">
+    <h3>ADHD/ASD-friendly logging rules</h3>
+    <ul class="tutor">
+      <li><b>Good-enough &gt; perfect:</b> 60 seconds, estimates fine. Round numbers are data.</li>
+      <li><b>Same conditions:</b> same time/place/surface when you can — reduces noise your brain will otherwise catastrophize.</li>
+      <li><b>One verb, one number:</b> don't log everything daily. Rotate: e.g. Mon morning+balance, Wed squat+hang, Fri silence+bio.</li>
+      <li><b>Close the loop:</b> after saving, close the tab. No re-reading 5×. Set one check-in day per week for trends.</li>
+      <li><b>Language swap:</b> "failed / dysregulated / fried" → "lower than my range / system asking for rest / loaded week." Words shape spirals.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= HISTORY ================= -->
+<section id="tab-history" class="card hidden">
+  <h2>History <small>Newest first. Single low readings are expected — look at ranges.</small></h2>
+  <div id="filters">
+    <button class="btn secondary" data-filter="all">All</button>
+    <button class="btn secondary" data-filter="neuro-morning">Morning</button>
+    <button class="btn secondary" data-filter="silence">Silence</button>
+    <button class="btn secondary" data-filter="heart">Heart</button>
+    <button class="btn secondary" data-filter="balance">Balance</button>
+    <button class="btn secondary" data-filter="squat">Squat</button>
+    <button class="btn secondary" data-filter="hang">Hang</button>
+    <button class="btn secondary" data-filter="wall">Wall</button>
+    <button class="btn secondary" data-filter="bio">Bio</button>
+  </div>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>Date</th><th>Test</th><th>Summary</th><th></th></tr></thead>
+    <tbody id="history-body"></tbody>
+  </table>
+  </div>
+  <p class="muted" id="history-empty">No logs yet — go log your first baseline.</p>
+</section>
+
+<footer>Single-file app · saves to localStorage · old squat/wall/heart logs preserved · educational only, not medical advice</footer>
+
+<script>
+const KEY = 'tensegrityLogs.v1';
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const todayISO = () => new Date().toISOString().slice(0,10);
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch{ return []; } }
+function save(l){ localStorage.setItem(KEY, JSON.stringify(l)); }
+function showFeedback(id, html){ const el=$(id); el.innerHTML=html; el.style.display='block'; }
+function esc(s){ return String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* Tabs */
+const TABS = ['dashboard','neuro','biomech','bio','guide','history'];
+$$('nav button').forEach(b=>b.addEventListener('click',()=>{
+  $$('nav button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  TABS.forEach(t=>$('#tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
+  if(['dashboard','history'].includes(b.dataset.tab)) render();
+}));
+
+/* Range labels */
+[['#nm-ready','#nm-ready-val'],['#sil-urge','#sil-urge-val'],
+ ['#heart-rest','#heart-rest-val'],['#heart-post','#heart-post-val'],
+ ['#squat-comfort','#squat-comfort-val'],['#wall-pain','#wall-pain-val'],
+ ['#hang-pain','#hang-pain-val'],['#bio-sq','#bio-sq-val'],['#bio-fat','#bio-fat-val']
+].forEach(([a,b])=>{ const el=$(a); if(el) el.addEventListener('input',e=>$(b).textContent=e.target.value); });
+
+document.querySelectorAll('input[type="date"]').forEach(i=>i.value=todayISO());
+
+/* Timers */
+function mkCountUp(ids){
+  let iv=null, sec=0;
+  const draw=()=>{ const m=String(Math.floor(sec/60)).padStart(2,'0'), s=String(sec%60).padStart(2,'0'); $(ids.d).textContent=`${m}:${s}`; };
+  $(ids.start).onclick=()=>{ clearInterval(iv); iv=setInterval(()=>{sec++; draw();},1000); };
+  $(ids.stop).onclick=()=>clearInterval(iv);
+  $(ids.reset).onclick=()=>{ clearInterval(iv); sec=0; draw(); };
+  draw();
+  return { get:()=>sec };
+}
+const sqT = mkCountUp({d:'#squat-timer',start:'#squat-start',stop:'#squat-stop',reset:'#squat-reset'});
+$('#squat-use').onclick=()=>{ document.querySelector('#form-squat [name="holdSec"]').value=sqT.get(); };
+const balT = mkCountUp({d:'#bal-timer',start:'#bal-start',stop:'#bal-stop',reset:'#bal-reset'});
+$('#bal-use-L').onclick=()=>{ document.querySelector('#form-balance [name="leftSec"]').value=balT.get(); };
+$('#bal-use-R').onclick=()=>{ document.querySelector('#form-balance [name="rightSec"]').value=balT.get(); };
+const hangT = mkCountUp({d:'#hang-timer',start:'#hang-start',stop:'#hang-stop',reset:'#hang-reset'});
+$('#hang-use').onclick=()=>{ document.querySelector('#form-hang [name="hangSec"]').value=hangT.get(); };
+
+function mkCountDown(d, start, reset, total){
+  let iv=null, sec=total;
+  const draw=()=>{ const m=String(Math.floor(sec/60)).padStart(2,'0'), s=String(sec%60).padStart(2,'0'); $(d).textContent=`${m}:${s}`; };
+  $(start).onclick=()=>{ clearInterval(iv); if(sec<=0) sec=total; iv=setInterval(()=>{ if(sec>0){sec--; draw();} if(sec===0){clearInterval(iv); $(d).textContent='Done ✓ — note what you felt';} },1000); };
+  $(reset).onclick=()=>{ clearInterval(iv); sec=total; draw(); };
+  draw();
+}
+mkCountDown('#heart-timer','#heart-start','#heart-reset',120);
+mkCountDown('#silence-timer','#silence-start','#silence-reset',600);
+
+/* Spiral helper */
+$('#spiral-btn').onclick=()=>$('#spiral-walk').classList.toggle('hidden');
+
+/* Helpers */
+function byType(logs,t){ return logs.filter(l=>l.type===t).sort((a,b)=>b.id-a.id); }
+function avg(a){ if(!a.length) return null; return a.reduce((s,v)=>s+v,0)/a.length; }
+function nudge(n){ return n<7 ? ` <span class="muted">(n=${n} — still early, keep collecting, no conclusions yet)</span>` : ` <span class="muted">(n=${n})</span>`; }
+
+/* Forms */
+function baseSave(formSel, type, coerce, feedback){
+  $(formSel).addEventListener('submit', e=>{
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target).entries());
+    const logs = load();
+    logs.push({ id: Date.now()+Math.floor(Math.random()*999), type, ...f, ...coerce(f) });
+    save(logs); e.target.reset();
+    document.querySelector(formSel+' [name="date"]').value = todayISO();
+    showFeedback(feedback.fn, feedback.make(f, logs));
+    render();
+  });
+}
+
+baseSave('#form-neuro-morning','neuro-morning',
+  f=>({ rhr:f.rhr?Number(f.rhr):null, hrv:f.hrv?Number(f.hrv):null, sleepH:f.sleepH?Number(f.sleepH):null, readiness:Number(f.readiness), stress:Number(f.stress) }),
+  { fn:'#fb-neuro-morning', make:(f,all)=>{
+    const prior = byType(all,'neuro-morning').map(l=>l.rhr).filter(v=>v>0).slice(-7);
+    const a = prior.length? avg(prior):null;
+    let out = [`Logged ✓. Readiness ${esc(f.readiness)}/10, load ${esc(f.stress)}/5.`];
+    if(f.rhr && a && prior.length>=3){
+      const d = Number(f.rhr)-a;
+      if(d>=7) out.push(`🔵 RHR ${esc(f.rhr)} is ~${Math.round(d)} above your recent ~${Math.round(a)}. <b>What this does NOT mean:</b> you've lost fitness. <b>Likely context:</b> sleep debt, heat/dehydration, stress, illness onset. <b>Kind step:</b> restore today (water + lytes, easy walk, early bed), re-check after 2 good nights.`);
+      else out.push(`🟢 RHR ${esc(f.rhr)} within your recent range (~${Math.round(a)}). No signal here — proceed as planned.`);
+    } else out.push(`🔵 Single readings are noise. After 7 mornings your average becomes the baseline to compare against.`);
+    if(Number(f.stress)>=4) out.push(`🧠 Load is ${esc(f.stress)}/5 — first principle says: down-regulate before load-bearing today.`);
+    out.push(`<span class="muted">Metacognition: what else could explain today? Note it in context rather than deciding now.</span>`);
+    return out.join('<br><br>');
+  }});
+
+baseSave('#form-silence','silence', f=>({ urge:Number(f.urge) }),
+  { fn:'#fb-silence', make:(f)=>{
+    let out=[];
+    if(f.completed==='yes') out.push(`🟢 Full 10 logged. Urge ${esc(f.urge)}/10 — that's information about today's arousal, not a grade.`);
+    else out.push(`🔵 Partial/stopped logged — still useful data. Urge ${esc(f.urge)}/10. Stilling is a practice; capacity builds with repetition + rest, not force.`);
+    if(f.phone==='yes') out.push(`Phone reached for — neutral note: what minute, what trigger (boredom, itch, worry)? Design next sit: phone in another room.`);
+    if(f.stim==='yes-strong') out.push(`Strong stim need — consider: were you under-slept, caffeinated, or already overloaded? Meet the need kindly (movement first, stillness later).`);
+    else out.push(`<span class="muted">If stillness was hard, the prescription is more down-regulation practice (breath, walks, sleep) — not self-criticism.</span>`);
+    return out.join('<br><br>');
+  }});
+
+baseSave('#form-heart','heart', f=>({ confRest:Number(f.confRest), confPost:Number(f.confPost) }),
+  { fn:'#fb-heart', make:(f)=>{
+    let out=[];
+    if(f.feltRest==='yes') out.push(`🟢 Rest signal felt (${esc(f.confRest)}/10) — interoception present today.`);
+    else if(f.feltRest==='unsure') out.push(`🟡 Faint at rest (${esc(f.confRest)}/10) — normal middle stage. Quieter room + slow exhale often clarifies.`);
+    else out.push(`🔵 No rest signal — common starting point. Post-exercise signal typically arrives first; that's the expected order.`);
+    if(f.feltPost==='yes'&&f.feltRest!=='yes') out.push(`Gating works (post ✓, rest …) — sensitivity builds with daily 2-min practice. Track confidence trend, not verdicts.`);
+    return out.join('<br><br>');
+  }});
+
+baseSave('#form-balance','balance', f=>({ leftSec:Number(f.leftSec), rightSec:Number(f.rightSec) }),
+  { fn:'#fb-balance', make:(f)=>{
+    const L=Number(f.leftSec), R=Number(f.rightSec), m=Math.min(L,R);
+    let out=[`Logged ✓ L ${L}s · R ${R}s.`];
+    if(m<15) out.push(`🔵 Under ~15s on at least one side → first principle: prioritise foot/ankle foundation (barefoot stands, calf raises, short supported squats) before chasing load. <b>Not:</b> "bad balance" as identity.`);
+    else out.push(`🟢 Both ≥15s — foundation present. Work symmetry + rougher surfaces gradually.`);
+    if(Math.abs(L-R)>=5) out.push(`Asymmetry ≥5s — normal and trainable; give the shorter side one extra easy set.`);
+    out.push(`<span class="muted">Compare weekly ranges in same shoes/surface. One wobble = noise.</span>`);
+    return out.join('<br><br>');
+  }});
+
+baseSave('#form-squat','squat', f=>({ holdSec:Number(f.holdSec), comfort:Number(f.comfort) }),
+  { fn:'#fb-squat', make:(f)=>{
+    const s=Number(f.holdSec); let out=[];
+    if(f.fallBack==='yes') out.push(`🔵 Falling back → calves/Achilles + posterior chain asking for length. Try doorframe-supported holds + daily calf stretch.`);
+    if(f.kneesCave==='yes') out.push(`🔵 Knees in → glute medius needs waking (clamshells, banded side-steps).`);
+    if(f.heelsDown==='no') out.push(`🔵 Heels lift → ankle dorsiflexion limit. Heel-elevated squats, lower elevation over weeks.`);
+    if(s>=300) out.push(`🟢 5-min primal rest ✓ — maintain 2–3×/week.`);
+    else if(s>=180) out.push(`🟢 3-min achieved (${s}s) — v1 goal ✓. New baseline 5 min (${Math.round(s/300*100)}%). Add ~10–15s/week.`);
+    else out.push(`⏱ ${s}s / 300s (${Math.round(s/300*100)}%). Small adds weekly; support is valid progression.`);
+    return out.join('<br><br>');
+  }});
+
+baseSave('#form-hang','hang', f=>({ hangSec:Number(f.hangSec), pain:Number(f.pain) }),
+  { fn:'#fb-hang', make:(f)=>{
+    const s=Number(f.hangSec); let out=[`Logged ✓ ${s}s.`];
+    if(f.grip==='slipped') out.push(`🔵 Grip gave out first — expected limiter; it improves fast with frequent short hangs (grease-the-groove) + rest.`);
+    if(f.grip==='shoulder') out.push(`🔵 Stopped for shoulder — respect that stop. Shorter active hangs (shoulders away from ears) + scap pulls before max attempts. Sharp pain → clinician, not more hangs.`);
+    if(Number(f.pain)>=6) out.push(`🔵 Discomfort ${esc(f.pain)}/10 is high — shorten next hangs, prioritise wall angels + rest.`);
+    else out.push(`<span class="muted">Forearm burn = expected. Joint pain = stop signal. Log bar type — thick/sweaty bars read shorter.</span>`);
+    return out.join('<br><br>');
+  }});
+
+baseSave('#form-wall','wall', f=>({ pain:Number(f.pain), reps:Number(f.reps) }),
+  { fn:'#fb-wall', make:(f)=>{
+    let out=[];
+    if(f.armsTouch!=='full') out.push(`🔵 Arms off wall → short pecs / desk pattern. Doorway pec stretch + chin tucks + thoracic opener.`);
+    if(f.backArch==='yes') out.push(`🔵 Back arched → ribs/core strategy: exhale, ribs down before sliding arms.`);
+    if(f.armsTouch==='full'&&f.backArch==='no'&&f.reach==='Y') out.push(`🟢 Full Y, flat back — centration present. Maintain.`);
+    else out.push(`Reach ${esc(f.reach)} — goal is full Y with ribs down, gradually.`);
+    return out.join('<br><br>');
+  }});
+
+baseSave('#form-bio','bio', f=>({ sleepH:f.sleepH?Number(f.sleepH):null, sleepQ:Number(f.sleepQ), fatigue:Number(f.fatigue), water:f.water?Number(f.water):null }),
+  { fn:'#fb-bio', make:(f)=>{
+    let out=[];
+    const w = f.water?Number(f.water):null;
+    if(w!==null && w<2 && f.heat!=='Mild') out.push(`🔵 ${esc(f.water)}L + ${esc(f.heat.toLowerCase())} heat — likely under-hydrated for equatorial sweat. +0.5–1L + electrolytes/salty food + fruit before judging any performance.`);
+    if(f.lytes==='no' && (Number(f.fatigue)>=6)) out.push(`🔵 Fatigue ${esc(f.fatigue)}/10 without minerals — try electrolytes / salty soup + fruit today as the smallest test.`);
+    if(Number(f.sleepQ)<=4) out.push(`🔵 Sleep quality ${esc(f.sleepQ)}/10 — expect everything else to read lower today. Protect tonight (cool, dark, earlier, no late caffeine/heavy meal).`);
+    if(!out.length) out.push(`🟢 Biology basics covered today. If fatigued anyway, check heat + digestion + illness before fitness stories.`);
+    out.push(`<span class="muted">Equatorial rule: water → lytes → shade/rest → sleep. Train hard only after these.</span>`);
+    return out.join('<br><br>');
+  }});
+
+/* Summaries + labels */
+let filter='all';
+document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter; render();}));
+const LABELS = {'neuro-morning':'Morning','silence':'Silence','heart':'Heart','balance':'Balance','squat':'Squat','hang':'Hang','wall':'Wall Angel','bio':'Bio'};
+function label(t){ return LABELS[t]||t; }
+function summarize(l){
+  if(l.type==='neuro-morning') return `RHR ${l.rhr??'–'} · HRV ${l.hrv??'–'} · sleep ${l.sleepH??'–'}h · readiness ${l.readiness}/10 · load ${l.stress}/5${l.notes?' · '+l.notes:''}`;
+  if(l.type==='silence') return `${l.completed} · phone:${l.phone} · stim:${l.stim} · urge ${l.urge}/10${l.notes?' · '+l.notes:''}`;
+  if(l.type==='heart') return `rest:${l.feltRest} (${l.confRest}/10, ${l.whereRest}) → post:${l.feltPost} (${l.confPost}/10)${l.notes?' · '+l.notes:''}`;
+  if(l.type==='balance') return `L ${l.leftSec}s · R ${l.rightSec}s · ${l.surface}${l.notes?' · '+l.notes:''}`;
+  if(l.type==='squat') return `${l.holdSec}s · heels ${l.heelsDown} · fall:${l.fallBack} · knees:${l.kneesCave} · comfort ${l.comfort}/10${l.notes?' · '+l.notes:''}`;
+  if(l.type==='hang') return `${l.hangSec}s · ${l.grip} · shoulder ${l.pain}/10${l.notes?' · '+l.notes:''}`;
+  if(l.type==='wall') return `${l.reach} · arms:${l.armsTouch} · arch:${l.backArch} · tight ${l.pain}/10 · ${l.reps} reps${l.notes?' · '+l.notes:''}`;
+  if(l.type==='bio') return `sleep ${l.sleepH??'–'}h (Q${l.sleepQ}) · fatigue ${l.fatigue}/10 · 💧${l.water??'–'}L ${l.lytes} · gut:${l.gut} · heat:${l.heat}${l.notes?' · '+l.notes:''}`;
+  return esc(l.notes||'');
+}
+
+/* Dashboard suggestion (decision tree) */
+function suggest(logs){
+  const m = byType(logs,'neuro-morning')[0];
+  const b = byType(logs,'bio')[0];
+  const bal = byType(logs,'balance')[0];
+  if(!logs.length) return `Log a morning check + one movement baseline to unlock today's suggestion.`;
+  const msgs = byType(logs,'neuro-morning').map(l=>l.rhr).filter(v=>v>0).slice(-8);
+  // RHR elevation check needs history
+  if(m && m.rhr && msgs.length>=4){
+    const base = avg(msgs.slice(0,-1));
+    if(base && (Number(m.rhr)-base)>=7) return `🔵 <b>Restore today.</b> Morning RHR ${esc(m.rhr)} vs recent ~${Math.round(base)} (+${Math.round(Number(m.rhr)-base)}). First principle: depleted system + load = regression. Water + lytes, shade walk, early bed. No hard session.`;
+  }
+  if(m && Number(m.stress)>=4) return `🔵 <b>Down-regulate today.</b> Load ${esc(m.stress)}/5 this morning. Breath, walk, sleep > intensity. Structure can wait a day.`;
+  if(b && (Number(b.fatigue)>=7)) return `🔵 <b>Biology first.</b> Fatigue ${esc(b.fatigue)}/10${b.water?`, water ${esc(b.water)}L, ${esc(b.lytes)} lytes`:''}. Rehydrate + rest + protect sleep tonight; retest tomorrow before deciding anything.`;
+  if(bal && Math.min(Number(bal.leftSec),Number(bal.rightSec))<15) return `🏗️ <b>Foundation focus.</b> Blind stand L ${esc(bal.leftSec)}s / R ${esc(bal.rightSec)}s — feet + ankles before load. Barefoot balance + calf work + supported squats today.`;
+  if(b && b.water && Number(b.water)<2 && b.heat!=='Mild') return `💧 <b>Hydrate first.</b> ${esc(b.water)}L in ${esc(String(b.heat).toLowerCase())} heat is likely the bottleneck — water + electrolytes, then train.`;
+  return `🟢 <b>Build today.</b> No red flags in latest logs. Pick ONE quality: stillness, depth, hang, or wall angels — easy + clean.`;
+}
+
+/* Render */
+function render(){
+  const logs = load().sort((a,b)=>b.id-a.id);
+  $('#stat-total').textContent = logs.length;
+  const days=[...new Set(logs.map(l=>l.date))].sort();
+  let streak=0; let d=new Date();
+  if(days.includes(todayISO())||(days.length&&(new Date()-new Date(days[days.length-1]))/864e5<2)){
+    while(days.includes(d.toISOString().slice(0,10))){ streak++; d.setDate(d.getDate()-1); }
+  }
+  $('#stat-streak').textContent = streak+' 🔥';
+  $('#stat-week').textContent = logs.filter(l=>(Date.now()-new Date(l.date).getTime())/864e5<8).length;
+  $('#today-suggest').innerHTML = suggest(logs);
+
+  const groups = [
+    ['🧠 Neuro', ['neuro-morning','silence','heart']],
+    ['🏗️ Biomech', ['balance','squat','hang','wall']],
+    ['🌿 Bio', ['bio']]
+  ];
+  $('#latest-cards').innerHTML = groups.map(([g,types])=>{
+    const rows = types.map(t=>{
+      const l = logs.find(x=>x.type===t);
+      const n = logs.filter(x=>x.type===t).length;
+      if(!l) return `<div class="muted">· ${label(t)}: no logs yet</div>`;
+      return `<div style="margin:6px 0"><b>${label(t)}</b> <span class="muted">${esc(l.date)}${nudge(n)}</span><br><span class="muted">${esc(summarize(l))}</span></div>`;
+    }).join('');
+    return `<div class="subcard"><b>${g}</b>${rows}</div>`;
+  }).join('');
+
+  const rows = logs.filter(l=>filter==='all'||l.type===filter);
+  $('#history-body').innerHTML = rows.map(l=>`<tr><td>${esc(l.date)}</td><td><span class="pill ${esc(l.type)}">${esc(label(l.type))}</span></td><td>${esc(summarize(l))}</td><td><button class="btn danger" onclick="delLog(${l.id})">✕</button></td></tr>`).join('');
+  $('#history-empty').style.display = rows.length?'none':'block';
+}
+window.delLog = id=>{ save(load().filter(l=>l.id!==id)); render(); };
+
+$('#export-csv').onclick=()=>{
+  const logs=load(); if(!logs.length) return alert('No logs to export.');
+  const keys=[...new Set(logs.flatMap(Object.keys))];
+  const csv=[keys.join(',')].concat(logs.map(l=>keys.map(k=>JSON.stringify(l[k]??'')).join(','))).join('\n');
+  dl(csv,'tensegrity-log.csv','text/csv');
+};
+$('#export-json').onclick=()=>{
+  const logs=load(); if(!logs.length) return alert('No logs to export.');
+  dl(JSON.stringify(logs,null,2),'tensegrity-log.json','application/json');
+};
+function dl(c,n,t){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:t})); a.download=n; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+$('#clear-all').onclick=()=>{ if(confirm('Delete ALL logs?')){ localStorage.removeItem(KEY); render(); } };
+
+render();
+</script>
+</body>
+</html>
