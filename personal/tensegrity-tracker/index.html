@@ -81,6 +81,7 @@
 <header>
   <h1>◈ <span>Tensegrity</span> Tracker v2</h1>
   <p>First-principles baselines · calm data · offline in your browser (localStorage).</p>
+  <p class="muted" style="font-size:.82rem">Data lives only in this browser — export regularly. "Fortnight export" feeds the vault ledger (<code>vault/Logs/fortnight-performance-log.md</code>) through <code>daily_log.py --merge</code>.</p>
 </header>
 
 <div class="calm-banner">
@@ -134,8 +135,10 @@
   <div>
     <button class="btn secondary" id="export-csv">⬇ CSV</button>
     <button class="btn secondary" id="export-json">⬇ JSON</button>
+    <button class="btn secondary" id="export-fortnight">📋 Fortnight export</button>
     <button class="btn danger" id="clear-all">🗑 Clear all</button>
   </div>
+  <p class="muted" style="font-size:.82rem" id="export-stamp"></p>
 </section>
 
 <!-- ================= NEURO ================= -->
@@ -707,10 +710,56 @@ $('#export-json').onclick=()=>{
   const logs=load(); if(!logs.length) return alert('No logs to export.');
   dl(JSON.stringify(logs,null,2),'tensegrity-log.json','application/json');
 };
+function showStamp(){
+  const el=$('#export-stamp'); if(!el) return;
+  const at=localStorage.getItem('trackerExport.v1');
+  el.textContent = at
+    ? `Fortnight export: ${at} → merge with: python3 daily_log.py --merge tracker-fortnight-${at}.md`
+    : 'No fortnight export yet — data lives only in this browser.';
+}
+$('#export-fortnight').onclick=()=>{
+  const logs=load(); if(!logs.length) return alert('No logs to export.');
+  const byDate={};
+  logs.forEach(l=>{ (byDate[l.date]=byDate[l.date]||[]).push(l); });
+  const out=[];
+  Object.keys(byDate).sort().forEach(d=>{
+    const ls=byDate[d], lines=[];
+    const nm=ls.filter(l=>l.type==='neuro-morning').sort((a,b)=>b.id-a.id)[0];
+    if(nm){
+      const v=[]; if(nm.rhr)v.push('rhr '+nm.rhr); if(nm.hrv)v.push('hrv '+nm.hrv); if(nm.readiness)v.push('readiness '+nm.readiness+'/10');
+      if(v.length) lines.push('- **Vitals:** '+v.join(' · '));
+      if(nm.stress) lines.push('- **Load:** '+nm.stress+'/5');
+    }
+    const tests=[];
+    ls.filter(l=>['silence','heart','balance','squat','hang','wall'].includes(l.type)).forEach(l=>{
+      if(l.type==='silence') tests.push('silence '+l.completed+' urge '+l.urge+'/10');
+      else if(l.type==='heart') tests.push('heart rest '+l.confRest+'/10 post '+l.confPost+'/10');
+      else if(l.type==='balance') tests.push('balance L'+l.leftSec+'/R'+l.rightSec+'s');
+      else if(l.type==='squat') tests.push('squat '+l.holdSec+'s');
+      else if(l.type==='hang') tests.push('hang '+l.hangSec+'s');
+      else if(l.type==='wall') tests.push('wall '+l.reps+' reps');
+    });
+    if(tests.length) lines.push('- **Tests:** '+tests.join(' · '));
+    const bio=ls.filter(l=>l.type==='bio').sort((a,b)=>b.id-a.id)[0];
+    if(bio){
+      const b=[]; if(bio.water)b.push('water '+bio.water+'L'); if(bio.lytes)b.push('lytes '+bio.lytes); if(bio.fatigue)b.push('fatigue '+bio.fatigue+'/10'); if(bio.gut)b.push('gut '+bio.gut); if(bio.heat)b.push('heat '+bio.heat);
+      if(b.length) lines.push('- **Bio:** '+b.join(' · '));
+    }
+    const notes=ls.map(l=>l.notes).filter(Boolean);
+    if(notes.length) lines.push('- **Note:** '+notes.join(' | '));
+    if(lines.length){ out.push('### '+d); lines.forEach(x=>out.push(x)); }
+  });
+  if(!out.length) return alert('No tracker data to export.');
+  const stamp=todayISO();
+  localStorage.setItem('trackerExport.v1', stamp);
+  dl('# Tracker export — generated '+stamp+'\n\n'+out.join('\n')+'\n','tracker-fortnight-'+stamp+'.md','text/markdown');
+  showStamp();
+};
 function dl(c,n,t){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:t})); a.download=n; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
 $('#clear-all').onclick=()=>{ if(confirm('Delete ALL logs?')){ localStorage.removeItem(KEY); render(); } };
 
 render();
+showStamp();
 </script>
 </body>
 </html>
