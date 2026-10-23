@@ -95,7 +95,7 @@ Anomaly) into `vault/Logs/fortnight-performance-log.md` between the `LEDGER STAR
 - `python3 daily_log.py --show` — print current ledger blocks.
 - `python3 daily_log.py --paper` — print ASCII sheet.
 
-Tracker export comes from `projects/personal/tensegrity-tracker/index.html` → "📋 Fortnight export"
+Tracker export comes from `projects/personal/chassis-map/index.html` → "📋 Fortnight export"
 (Dashboard). Merge folds: `Vitals`/`Load` into their fields (`[tracker]` prefix), `Tests`/`Bio`/`Note`
 into `Anomaly`; sleep tokens from `Bio` are dropped — paper owns sleep. `--batch` always runs before
 `--merge` in the same command. Append-only, dedupes by `### date`.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Tensegrity Tracker v2 – First-Principles Baseline Log</title>
+<title>Chassis Map — First-Principles Baseline Log</title>
 <style>
   :root {
     --bg: #0f1419; --card: #1a2230; --card2: #222d42; --inner: #0b111c;
@@ -79,7 +79,7 @@
 <body>
 
 <header>
-  <h1>◈ <span>Tensegrity</span> Tracker v2</h1>
+  <h1>◈ <span>Chassis</span> Map</h1>
   <p>First-principles baselines · calm data · offline in your browser (localStorage).</p>
   <p class="muted" style="font-size:.82rem">Data lives only in this browser — export regularly. "Fortnight export" feeds the vault ledger (<code>vault/Logs/fortnight-performance-log.md</code>) through <code>daily_log.py --merge</code>.</p>
 </header>
@@ -461,14 +461,29 @@
 <footer>Single-file app · saves to localStorage · old squat/wall/heart logs preserved · educational only, not medical advice</footer>
 
 <script>
-const KEY = 'tensegrityLogs.v1';
+const KEY = 'chassis-map.v1';
+const LEGACY_KEY = 'tensegrityLogs.v1';   // pre-rename key, kept as a read-fallback until the old copy is confirmed migrated
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 /* Local calendar date (toISOString is UTC — in UTC+3 it returns yesterday between 00:00–03:00). */
 const todayISO = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 /* Parse YYYY-MM-DD as a local midnight, matching todayISO — new Date(str) parses UTC. */
 function parseDate(s){ const [y,m,d]=String(s).split('-').map(Number); return new Date(y,(m||1)-1,d||1); }
-function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch{ return []; } }
+/* Read current key first; if empty, fall back to the pre-rename key and migrate forward.
+   The migration write is best-effort — if it fails, LEGACY_KEY still holds the data and
+   returns it, so the irreplaceable dataset is never dropped for lack of a place to write. */
+function load(){
+  let cur=null;
+  try{ cur = JSON.parse(localStorage.getItem(KEY)); }catch{}
+  if(Array.isArray(cur) && cur.length) return cur;
+  let old=null;
+  try{ old = JSON.parse(localStorage.getItem(LEGACY_KEY)); }catch{}
+  if(Array.isArray(old) && old.length){
+    try{ localStorage.setItem(KEY, JSON.stringify(old)); }catch{}
+    return old;
+  }
+  return [];
+}
 /* Returns null on success, the Error on failure — callers must surface it, never lose the entry silently. */
 function save(l){ try{ localStorage.setItem(KEY, JSON.stringify(l)); return null; }catch(err){ return err; } }
 function showFeedback(id, html){ const el=$(id); el.innerHTML=html; el.style.display='block'; }
@@ -761,11 +776,11 @@ $('#export-csv').onclick=()=>{
   const logs=load(); if(!logs.length) return alert('No logs to export.');
   const keys=[...new Set(logs.flatMap(Object.keys))];
   const csv=[keys.join(',')].concat(logs.map(l=>keys.map(k=>JSON.stringify(l[k]??'')).join(','))).join('\n');
-  dl(csv,'tensegrity-log.csv','text/csv');
+  dl(csv,'chassis-map-log.csv','text/csv');
 };
 $('#export-json').onclick=()=>{
   const logs=load(); if(!logs.length) return alert('No logs to export.');
-  dl(JSON.stringify(logs,null,2),'tensegrity-log.json','application/json');
+  dl(JSON.stringify(logs,null,2),'chassis-map-log.json','application/json');
 };
 function showStamp(){
   const el=$('#export-stamp'); if(!el) return;
@@ -815,7 +830,7 @@ $('#export-fortnight').onclick=()=>{
 function dl(c,n,t){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:t})); a.download=n; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
 $('#clear-all').onclick=()=>{
   if(!confirm('Delete ALL logs?')) return;
-  try{ localStorage.removeItem(KEY); localStorage.removeItem('trackerExport.v1'); }
+  try{ localStorage.removeItem(KEY); localStorage.removeItem(LEGACY_KEY); localStorage.removeItem('trackerExport.v1'); }
   catch(err){ return alert('Could not clear storage ('+(err&&err.name?err.name:err)+').'); }
   render(); showStamp();   // the old export stamp referred to data that no longer exists
 };
