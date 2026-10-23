@@ -6,10 +6,13 @@
 <title>Chassis Map — First-Principles Baseline Log</title>
 <style>
   :root {
-    --bg: #0f1419; --card: #1a2230; --card2: #222d42; --inner: #0b111c;
-    --accent: #5eead4; --accent2: #a78bfa;
+    --bg: #0f1419; --card: #1a2230; --card2: #222d42; --inner: #0b111c; --deep: #060b14;
+    --accent: #5eead4; --accent2: #a78bfa; --accent-ink: #062e29;
     --text: #e8eef6; --muted: #94a3b8;
     --good: #34d399; --warn: #fbbf24; --bad: #f87171;
+    --border: #2a364e; --border2: #334155;
+    --calm-bg: #0e2a26; --calm-line: #1f5c55;
+    --warn-bg: #2a230f; --meta-bg: #1e1b3a;
     --radius: 14px;
   }
   * { box-sizing: border-box; }
@@ -20,42 +23,42 @@
   header h1 { margin:0; font-size:1.7rem; letter-spacing:-0.02em; }
   header h1 span { color: var(--accent); }
   header p { color: var(--muted); margin:6px 0 0; font-size:0.92rem; }
-  .calm-banner { background: #0e2a26; border:1px solid #1f5c55; border-radius: var(--radius);
+  .calm-banner { background: var(--calm-bg); border:1px solid var(--calm-line); border-radius: var(--radius);
     padding:12px 14px; margin:14px 0; font-size:0.9rem; }
   .calm-banner b { color: var(--accent); }
   nav { display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
     margin:12px 0; position:sticky; top:0; background:var(--bg); padding:10px 0; z-index:10; }
-  nav button { border:1px solid #334155; background:var(--card); color:var(--text);
+  nav button { border:1px solid var(--border2); background:var(--card); color:var(--text);
     padding:9px 14px; border-radius:999px; cursor:pointer; font-size:0.9rem; }
-  nav button.active { background:var(--accent); color:#062e29; border-color:var(--accent); font-weight:700; }
-  .card { background:var(--card); border:1px solid #2a364e; border-radius:var(--radius); padding:18px; margin:12px 0; }
+  nav button.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin:12px 0; }
   .card h2 { margin:0 0 6px; font-size:1.15rem; }
   .card h2 small, .sub { display:block; font-weight:400; color:var(--muted); font-size:0.85rem; margin-top:4px; line-height:1.45; }
-  .subcard { background: var(--inner); border:1px solid #2a364e; border-radius:12px; padding:14px; margin:14px 0; }
+  .subcard { background: var(--inner); border:1px solid var(--border); border-radius:12px; padding:14px; margin:14px 0; }
   .subcard h3 { margin:0 0 4px; font-size:1.02rem; }
-  .principle { border-left:4px solid var(--accent); padding:8px 12px; background:#0e2a26; border-radius:0 10px 10px 0; font-size:0.88rem; margin:10px 0; }
-  .scrutiny { border-left:4px solid var(--warn); padding:8px 12px; background:#2a230f; border-radius:0 10px 10px 0; font-size:0.87rem; margin:10px 0; }
-  .meta { border-left:4px solid var(--accent2); padding:8px 12px; background:#1e1b3a; border-radius:0 10px 10px 0; font-size:0.87rem; margin:10px 0; }
+  .principle { border-left:4px solid var(--accent); padding:8px 12px; background:var(--calm-bg); border-radius:0 10px 10px 0; font-size:0.88rem; margin:10px 0; }
+  .scrutiny { border-left:4px solid var(--warn); padding:8px 12px; background:var(--warn-bg); border-radius:0 10px 10px 0; font-size:0.87rem; margin:10px 0; }
+  .meta { border-left:4px solid var(--accent2); padding:8px 12px; background:var(--meta-bg); border-radius:0 10px 10px 0; font-size:0.87rem; margin:10px 0; }
   label { display:block; margin:12px 0 4px; font-size:0.9rem; color:#cbd5e1; font-weight:600; }
   input, select, textarea { width:100%; padding:10px 12px; border-radius:10px;
-    border:1px solid #334155; background:#0b111c; color:var(--text); font-size:1rem; }
+    border:1px solid var(--border2); background:var(--inner); color:var(--text); font-size:1rem; }
   textarea { min-height:56px; resize:vertical; }
   .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   @media (max-width:600px){ .row{grid-template-columns:1fr;} }
   .btn { display:inline-block; margin-top:14px; padding:12px 18px; border-radius:12px; border:0;
-    cursor:pointer; font-weight:700; font-size:1rem; background:var(--accent); color:#062e29; width:100%; }
-  .btn.secondary { background:var(--card2); color:var(--text); border:1px solid #334155; width:auto; margin:6px 8px 0 0; padding:9px 14px; font-size:0.9rem; }
+    cursor:pointer; font-weight:700; font-size:1rem; background:var(--accent); color:var(--accent-ink); width:100%; }
+  .btn.secondary { background:var(--card2); color:var(--text); border:1px solid var(--border2); width:auto; margin:6px 8px 0 0; padding:9px 14px; font-size:0.9rem; }
   .btn.danger { background:transparent; border:1px solid var(--bad); color:var(--bad); width:auto; padding:9px 14px; font-size:0.9rem; }
   .btn.calmb { background:transparent; border:1px solid var(--accent); color:var(--accent); width:100%; padding:11px; font-size:0.95rem; margin-top:10px;}
-  .feedback { margin-top:12px; padding:12px; border-radius:10px; background:#0b111c;
+  .feedback { margin-top:12px; padding:12px; border-radius:10px; background:var(--inner);
     border-left:4px solid var(--accent2); font-size:0.92rem; line-height:1.55; display:none; }
   .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:12px 0; }
   @media (max-width:600px){ .stats{grid-template-columns:1fr;} }
-  .stat { background:var(--card); border:1px solid #2a364e; border-radius:12px; padding:12px; text-align:center; }
+  .stat { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; text-align:center; }
   .stat .n { font-size:1.5rem; font-weight:800; }
   .stat .l { font-size:0.8rem; color:var(--muted); margin-top:4px; }
   table { width:100%; border-collapse:collapse; font-size:0.84rem; margin-top:10px; }
-  th, td { text-align:left; padding:8px; border-bottom:1px solid #2a364e; vertical-align:top; }
+  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--border); vertical-align:top; }
   th { color:var(--muted); font-weight:600; }
   .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
   .pill.squat,.pill.neuro-morning { background:#134e4a; color:#5eead4; }
@@ -67,13 +70,27 @@
   details { margin-top:8px; } details summary { cursor:pointer; color:var(--accent); font-size:0.9rem; }
   .timer { font-variant-numeric:tabular-nums; font-size:2rem; font-weight:800; text-align:center; margin:8px 0; }
   .timer-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
-  .timer-row button { padding:8px 14px; border-radius:10px; border:1px solid #334155; background:var(--card2); color:var(--text); cursor:pointer; font-weight:700; }
+  .timer-row button { padding:8px 14px; border-radius:10px; border:1px solid var(--border2); background:var(--card2); color:var(--text); cursor:pointer; font-weight:700; }
   footer { text-align:center; color:var(--muted); font-size:0.8rem; margin-top:24px; }
   input[type="range"]{ padding:0; } .range-val{ color:var(--accent); font-weight:800; }
-  .suggest { background:#0e2a26; border:1px solid #1f5c55; border-radius:12px; padding:12px 14px; margin:10px 0; font-size:0.92rem; }
+  .suggest { background:var(--calm-bg); border:1px solid var(--calm-line); border-radius:12px; padding:12px 14px; margin:10px 0; font-size:0.92rem; }
+  .suggest.hero { padding:16px; font-size:1rem; border-left:4px solid var(--accent); }
+  .hero-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; }
+  .hero-date { color:var(--muted); font-size:0.78rem; font-variant-numeric:tabular-nums; }
+  .pill.state { background:var(--bg); border:1px solid var(--calm-line); color:var(--accent); }
+  .timerbox { background:var(--deep); margin:10px 0; }
+  .chips { display:flex; gap:8px; overflow-x:auto; padding:2px 0 10px; margin:8px 0 2px; }
+  .chips button { flex:0 0 auto; border:1px solid var(--border2); background:var(--card2); color:var(--muted);
+    padding:7px 12px; border-radius:999px; cursor:pointer; font-size:0.85rem; white-space:nowrap; }
+  .chips button.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; }
+  .spark { vertical-align:middle; }
+  .spark.a { color:var(--accent); }
+  .spark.b { color:var(--accent2); }
+  .spark-range { margin-left:6px; font-variant-numeric:tabular-nums; font-size:0.76rem; }
+  .trend { margin:5px 0 2px; line-height:1; }
   .checklist li { margin:6px 0; font-size:0.9rem; }
   ol.tutor li, ul.tutor li { margin:8px 0; font-size:0.92rem; }
-  code { background:#0b111c; padding:1px 6px; border-radius:6px; }
+  code { background:var(--inner); padding:1px 6px; border-radius:6px; }
 </style>
 </head>
 <body>
@@ -108,7 +125,7 @@
     <div class="stat"><div class="n" id="stat-week">0</div><div class="l">logs last 7 days</div></div>
   </div>
 
-  <div class="suggest" id="today-suggest">Log a few baselines and I'll suggest where to focus today.</div>
+  <div class="suggest hero" id="today-suggest">Log a few baselines and I'll suggest where to focus today.</div>
 
   <div id="latest-cards"></div>
 
@@ -145,8 +162,14 @@
 <section id="tab-neuro" class="card hidden">
   <h2>🧠 Neurological baseline <small>Autonomic state first. Your nervous system dictates capacity — if it's depleted (ADHD burnout is common), heavy load causes regression, not adaptation. Measure before you load.</small></h2>
 
+  <div class="chips" role="tablist" aria-label="Neuro tests">
+    <button type="button" data-test="morning" class="active" aria-selected="true">A · Morning</button>
+    <button type="button" data-test="silence" aria-selected="false">B · Silence</button>
+    <button type="button" data-test="heart" aria-selected="false">C · Heart</button>
+  </div>
+
   <!-- Morning HRV/RHR -->
-  <div class="subcard">
+  <div class="subcard" data-test-panel="morning">
     <h3>A. Morning check — HRV / RHR on waking</h3>
     <div class="principle">⚛️ <b>First principle:</b> HRV &amp; resting HR reflect sympathetic vs. parasympathetic balance. Trend matters, not one morning. A personal rise in RHR of ≥7 bpm over your 7 most recent mornings, or an HRV dip with fatigue, = system asking for down-regulation, not intensity.</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> single mornings are noisy (bad sleep, heat, dehydration, alcohol, late caffeine, illness). Never judge one reading. Need 7+ mornings. Same time, same position (sitting/lying), before phone/coffee.</div>
@@ -171,12 +194,12 @@
   </div>
 
   <!-- Silence test -->
-  <div class="subcard">
+  <div class="subcard hidden" data-test-panel="silence">
     <h3>B. 10-min silence sit — dopamine / stillness capacity</h3>
     <div class="principle">⚛️ <b>First principle:</b> can you sit in a dark, silent room 10 min without phone or stimming? This probes baseline arousal + interoception. Difficulty ≠ personal failure — it's information that the system currently needs parasympathetic practice before load-bearing.</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> ADHD/ASD brains find stillness harder by design. Score urges, don't moralize them. Track urge intensity over weeks. Environment matters (noise, hunger, heat).</div>
     <div class="meta">🧩 <b>Metacognition prompt:</b> "What did I feel at minute 2 vs. minute 8? What strategy did I use — breath, noticing, counting?" You're training observation, not perfection.</div>
-    <div class="card" style="background:#060b14; margin:10px 0">
+    <div class="card timerbox">
       <div class="timer" id="silence-timer">10:00</div>
       <div class="timer-row">
         <button type="button" id="silence-start">▶ Start 10-min</button>
@@ -203,11 +226,11 @@
   </div>
 
   <!-- Heart interoception (moved from v1) -->
-  <div class="subcard">
+  <div class="subcard hidden" data-test-panel="heart">
     <h3>C. Interoceptive heart test — vagal gating</h3>
     <div class="principle">⚛️ <b>First principle:</b> feeling your heartbeat without touch = interoception + vagal tone. For ADHD/ASD this connection supports emotional regulation. Post-exercise signal usually appears before resting signal — that's expected order, not failure.</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> track confidence 1–10 over time, not yes/no verdicts. Anxiety, caffeine, noise all gate the signal.</div>
-    <div class="card" style="background:#060b14; margin:10px 0">
+    <div class="card timerbox">
       <div class="timer" id="heart-timer">02:00</div>
       <div class="timer-row">
         <button type="button" id="heart-start">▶ Start 2-min</button>
@@ -240,11 +263,18 @@
 <section id="tab-biomech" class="card hidden">
   <h2>🏗️ Biomechanical baseline <small>Don't test 1-rep max. Test structural integrity: vestibular + proprioception + fascial elasticity + joint centration.</small></h2>
 
-  <div class="subcard">
+  <div class="chips" role="tablist" aria-label="Biomech tests">
+    <button type="button" data-test="balance" class="active" aria-selected="true">A · Balance</button>
+    <button type="button" data-test="squat" aria-selected="false">B · Squat</button>
+    <button type="button" data-test="hang" aria-selected="false">C · Hang</button>
+    <button type="button" data-test="wall" aria-selected="false">D · Wall</button>
+  </div>
+
+  <div class="subcard" data-test-panel="balance">
     <h3>A. Blind single-leg stand — vestibular + proprioception</h3>
     <div class="principle">⚛️ <b>First principle:</b> eyes closed removes vision; balance must come from inner ear + foot proprioceptors + cerebellum. Your <b>weaker</b> side under 15s suggests foot/ankle foundation work first. Test barefoot, safe space, arms crossed.</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> time varies with fatigue, surface, shoes, illness, heat. Always test same conditions. Compare left vs. right and weekly range, not one wobble.</div>
-    <div class="card" style="background:#060b14; margin:10px 0">
+    <div class="card timerbox">
       <div class="timer" id="bal-timer">00:00</div>
       <div class="timer-row">
         <button type="button" id="bal-start">▶ Start</button>
@@ -270,11 +300,11 @@
     </form>
   </div>
 
-  <div class="subcard">
+  <div class="subcard hidden" data-test-panel="squat">
     <h3>B. Deep primal squat — fascial elasticity + ankle dorsiflexion</h3>
     <div class="principle">⚛️ <b>First principle:</b> heels-down deep squat tests posterior-chain fascial elasticity + ankle dorsiflexion + hip health. Baseline goal: <b>5 min</b> comfortable.</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> depth and comfort change with warm-up, footwear, fatigue, ankle stiffness in the morning. Support (doorframe) is a valid progression, not cheating.</div>
-    <div class="card" style="background:#060b14; margin:10px 0">
+    <div class="card timerbox">
       <div class="timer" id="squat-timer">00:00</div>
       <div class="timer-row">
         <button type="button" id="squat-start">▶ Start</button>
@@ -304,11 +334,11 @@
     </form>
   </div>
 
-  <div class="subcard">
+  <div class="subcard hidden" data-test-panel="hang">
     <h3>C. Dead hang — grip + shoulder centration</h3>
     <div class="principle">⚛️ <b>First principle:</b> max hang tests grip (correlates with nervous-system health) + shoulder joint centration. Hang from a secure bar, active shoulders (don't shrug to ears), breathe.</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> grip varies hugely with sweat/heat, bar thickness, skin, fatigue. Log conditions. Stop on sharp shoulder pain — discomfort in forearms is expected, joint pain is a stop signal.</div>
-    <div class="card" style="background:#060b14; margin:10px 0">
+    <div class="card timerbox">
       <div class="timer" id="hang-timer">00:00</div>
       <div class="timer-row">
         <button type="button" id="hang-start">▶ Start</button>
@@ -333,7 +363,7 @@
     </form>
   </div>
 
-  <div class="subcard">
+  <div class="subcard hidden" data-test-panel="wall">
     <h3>D. Wall angel — thoracic + shoulder centration</h3>
     <div class="principle">⚛️ <b>First principle:</b> back to wall (heels, glutes, upper back, head). Goalpost → Y without low-back arching. Tests thoracic extension + pec length + deep neck flexors ("upper-cross" from desk/tech).</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> morning stiffness vs. post-walk differ. Compare same time of day. Partial contact is a starting point with a clear progression.</div>
@@ -489,36 +519,41 @@ const THRESHOLDS = {
   asymmetrySec: 5,
 };
 
+/* mkRule: a rule's NAME lives here and only here — the hero chip, the message body's bold
+   label, and the Guide's doc all get it injected, so they cannot diverge. Docs write %n%
+   where the state name belongs; mkRule fills it in. */
+function mkRule(o){ return { id:o.id, name:o.name, doc:o.doc.replace('%n%', `<b>${esc(o.name)}:</b>`), when:o.when, say:c => `${o.icon} <b>${esc(o.name)}.</b> ${o.body(c)}` }; }
+
 const DECISION_TREE = [
-  { id:'restore-rhr',
-    doc:`RHR ≥${THRESHOLDS.rhrRiseBpm} bpm above your ${THRESHOLDS.evidenceN} most recent mornings (needs ≥${THRESHOLDS.evidenceMin} readings) → <b>Restore today:</b> water + lytes, shade walk, early bed. No hard training.`,
+  mkRule({ id:'restore-rhr', name:'Restore today', icon:'🔵',
+    doc:`RHR ≥${THRESHOLDS.rhrRiseBpm} bpm above your ${THRESHOLDS.evidenceN} most recent mornings (needs ≥${THRESHOLDS.evidenceMin} readings) → %n% water + lytes, shade walk, early bed. No hard training.`,
     when: c => !!(c.m && c.m.rhr && c.base && (Number(c.m.rhr)-c.base) >= THRESHOLDS.rhrRiseBpm),
-    say: c => `🔵 <b>Restore today.</b> Morning RHR ${esc(c.m.rhr)} vs recent ~${Math.round(c.base)} (+${Math.round(Number(c.m.rhr)-c.base)}). First principle: depleted system + load = regression. Water + lytes, shade walk, early bed. No hard session.${c.sleepH?` Last night ${esc(c.sleepH)}h — sleep debt explains much of a rise like this.`:''}` },
+    body: c => `Morning RHR ${esc(c.m.rhr)} vs recent ~${Math.round(c.base)} (+${Math.round(Number(c.m.rhr)-c.base)}). First principle: depleted system + load = regression. Water + lytes, shade walk, early bed. No hard session.${c.sleepH?` Last night ${esc(c.sleepH)}h — sleep debt explains much of a rise like this.`:''}` }),
 
-  { id:'downregulate',
-    doc:`Otherwise, morning load ≥${THRESHOLDS.stressLoad}/5 → <b>Down-regulate today:</b> breath, walk, sleep before intensity. Structure can wait a day.`,
+  mkRule({ id:'downregulate', name:'Down-regulate today', icon:'🔵',
+    doc:`Otherwise, morning load ≥${THRESHOLDS.stressLoad}/5 → %n% breath, walk, sleep before intensity. Structure can wait a day.`,
     when: c => !!(c.m && Number(c.m.stress) >= THRESHOLDS.stressLoad),
-    say: c => `🔵 <b>Down-regulate today.</b> Load ${esc(c.m.stress)}/5 this morning. Breath, walk, sleep > intensity. Structure can wait a day.` },
+    body: c => `Load ${esc(c.m.stress)}/5 this morning. Breath, walk, sleep > intensity. Structure can wait a day.` }),
 
-  { id:'biology',
-    doc:`Otherwise, fatigue ≥${THRESHOLDS.fatigue}/10 → <b>Biology first:</b> rehydrate, rest, protect tonight, retest tomorrow before deciding anything.`,
+  mkRule({ id:'biology', name:'Biology first', icon:'🔵',
+    doc:`Otherwise, fatigue ≥${THRESHOLDS.fatigue}/10 → %n% rehydrate, rest, protect tonight, retest tomorrow before deciding anything.`,
     when: c => !!(c.b && Number(c.b.fatigue) >= THRESHOLDS.fatigue),
-    say: c => `🔵 <b>Biology first.</b> Fatigue ${esc(c.b.fatigue)}/10${c.b.water?`, water ${esc(c.b.water)}L, ${esc(c.b.lytes)} lytes`:''}${c.sleepH?`, sleep ${esc(c.sleepH)}h`:''}. Rehydrate + rest + protect sleep tonight; retest tomorrow before deciding anything.` },
+    body: c => `Fatigue ${esc(c.b.fatigue)}/10${c.b.water?`, water ${esc(c.b.water)}L, ${esc(c.b.lytes)} lytes`:''}${c.sleepH?`, sleep ${esc(c.sleepH)}h`:''}. Rehydrate + rest + protect sleep tonight; retest tomorrow before deciding anything.` }),
 
-  { id:'foundation',
-    doc:`Otherwise, weaker leg under ${THRESHOLDS.blindStandSec}s eyes-closed → <b>Foundation focus:</b> barefoot balance, calf/ankle work, supported squats before load.`,
+  mkRule({ id:'foundation', name:'Foundation focus', icon:'🏗️',
+    doc:`Otherwise, weaker leg under ${THRESHOLDS.blindStandSec}s eyes-closed → %n% barefoot balance, calf/ankle work, supported squats before load.`,
     when: c => !!(c.bal && Math.min(Number(c.bal.leftSec),Number(c.bal.rightSec)) < THRESHOLDS.blindStandSec),
-    say: c => `🏗️ <b>Foundation focus.</b> Blind stand L ${esc(c.bal.leftSec)}s / R ${esc(c.bal.rightSec)}s — feet + ankles before load. Barefoot balance + calf work + supported squats today.` },
+    body: c => `Blind stand L ${esc(c.bal.leftSec)}s / R ${esc(c.bal.rightSec)}s — feet + ankles before load. Barefoot balance + calf work + supported squats today.` }),
 
-  { id:'hydrate',
-    doc:`Otherwise, water under ${THRESHOLDS.waterL}L in heat above mild → <b>Hydrate first:</b> water + electrolytes, then train.`,
+  mkRule({ id:'hydrate', name:'Hydrate first', icon:'💧',
+    doc:`Otherwise, water under ${THRESHOLDS.waterL}L in heat above mild → %n% water + electrolytes, then train.`,
     when: c => !!(c.b && c.b.water && Number(c.b.water) < THRESHOLDS.waterL && c.b.heat !== 'Mild'),
-    say: c => `💧 <b>Hydrate first.</b> ${esc(c.b.water)}L in ${esc(String(c.b.heat).toLowerCase())} heat is likely the bottleneck — water + electrolytes, then train.` },
+    body: c => `${esc(c.b.water)}L in ${esc(String(c.b.heat).toLowerCase())} heat is likely the bottleneck — water + electrolytes, then train.` }),
 
-  { id:'build',
-    doc:`Otherwise → <b>Build today:</b> one quality only — stillness, squat depth, hang time, or wall angels. Clean and easy.`,
+  mkRule({ id:'build', name:'Build today', icon:'🟢',
+    doc:`Otherwise → %n% one quality only — stillness, squat depth, hang time, or wall angels. Clean and easy.`,
     when: () => true,
-    say: c => `🟢 <b>Build today.</b> No red flags in latest logs. Pick ONE quality: stillness, depth, hang, or wall angels — easy + clean.${c.sleepH && Number(c.sleepH) < 6 ? ` <span class="muted">Last night ${esc(c.sleepH)}h — if today dips, check sleep before a fitness story.</span>` : ''}` },
+    body: c => `No red flags in latest logs. Pick ONE quality: stillness, depth, hang, or wall angels — easy + clean.${c.sleepH && Number(c.sleepH) < 6 ? ` <span class="muted">Last night ${esc(c.sleepH)}h — if today dips, check sleep before a fitness story.</span>` : ''}` }),
 ];
 
 /* Tabs */
@@ -528,6 +563,15 @@ $$('nav button').forEach(b=>b.addEventListener('click',()=>{
   b.classList.add('active');
   TABS.forEach(t=>$('#tab-'+t).classList.toggle('hidden', t!==b.dataset.tab));
   if(['dashboard','history'].includes(b.dataset.tab)) render();
+}));
+
+/* One test per screen: a layer tab shows exactly one test panel; the chip strip switches.
+   Panels after the first ship hidden in markup, so the no-JS state is already correct. */
+$$('.chips').forEach(row=>row.addEventListener('click', e=>{
+  const b = e.target.closest('button[data-test]'); if(!b) return;
+  const sec = b.closest('section');
+  row.querySelectorAll('button[data-test]').forEach(x=>{ x.classList.toggle('active', x===b); x.setAttribute('aria-selected', String(x===b)); });
+  sec.querySelectorAll('[data-test-panel]').forEach(p=>p.classList.toggle('hidden', p.dataset.testPanel !== b.dataset.test));
 }));
 
 /* Range labels: wire generically from input id -> `${id}-val`, and seed each label from its
@@ -744,9 +788,10 @@ function summarize(l){
   return esc(l.notes||'');
 }
 
-/* Dashboard suggestion — walks DECISION_TREE in order; the last rule always matches. */
-function suggest(logs){
-  if(!logs.length) return `Log a few baselines and I'll suggest where to focus today.`;
+/* Dashboard suggestion — walks DECISION_TREE in order; the last rule always matches.
+   decide() is the shared core: the hero chip (rule.name) and the message (rule.say) both
+   come from the SAME matched rule, so the headline can never contradict the body. */
+function decide(logs){
   const m = byType(logs,'neuro-morning')[0];
   const b = byType(logs,'bio')[0];
   const bal = byType(logs,'balance')[0];
@@ -754,10 +799,49 @@ function suggest(logs){
   const base = priorRHR.length >= THRESHOLDS.evidenceMin ? avg(priorRHR) : null;
   const sleepH = (m && m.sleepH) || (b && b.sleepH) || null;
   const ctx = { m, b, bal, base, sleepH };
-  return DECISION_TREE.find(r => r.when(ctx)).say(ctx);
+  return { rule: DECISION_TREE.find(r => r.when(ctx)), ctx };
 }
+const SUGGEST_EMPTY = `Log a few baselines and I'll suggest where to focus today.`;
+function suggest(logs){ if(!logs.length) return SUGGEST_EMPTY; const d = decide(logs); return d.rule.say(d.ctx); }
 
 /* Render */
+/* Tiny inline sparkline: last ≤7 readings as a line over its own min/max band, with the
+   numeric range always beside it — a trend line alone invites a verdict, the range doesn't.
+   color class (.a/.b) maps to a token via CSS; children use currentColor, never raw hex. */
+function sparkSVG(vals, cls, label){
+  const pts = vals.filter(v=>Number.isFinite(v));
+  if(pts.length < 2) return '';
+  const w=96, h=24, pad=3;
+  const min=Math.min(...pts), max=Math.max(...pts), span=(max-min)||1;
+  const X=i=>(pad + i*(w-2*pad)/(pts.length-1)).toFixed(1);
+  const Y=v=>(h-pad-((v-min)/span)*(h-2*pad)).toFixed(1);
+  const line=pts.map((v,i)=>X(i)+','+Y(v)).join(' ');
+  const bandH=Math.max(1, Number(Y(min))-Number(Y(max)));
+  return `<svg class="spark ${cls}" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)} ${min} to ${max}, last ${pts.length} readings">`+
+    `<rect x="0" y="${Y(max)}" width="${w}" height="${bandH}" fill="currentColor" opacity="0.15"></rect>`+
+    `<polyline points="${line}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"></polyline>`+
+    `<circle cx="${X(pts.length-1)}" cy="${Y(pts[pts.length-1])}" r="2.2" fill="currentColor"></circle></svg>`;
+}
+/* One series per test — balance reads the WEAKER side, matching the decision rule that
+   keys on min(L,R), so the picture and the verdict share a definition. */
+const SPARKS = {
+  'neuro-morning': { cls:'b', name:'RHR',        get:l=>{const v=Number(l.rhr); return v>0?v:null;} },
+  'silence':       { cls:'a', name:'urge',       get:l=>{const v=Number(l.urge); return v>0?v:null;} },
+  'heart':         { cls:'a', name:'confidence', get:l=>{const v=Number(l.confPost); return v>0?v:null;} },
+  'balance':       { cls:'a', name:'weaker side',get:l=>{const a=Number(l.leftSec), b=Number(l.rightSec); return a>0&&b>0?Math.min(a,b):null;} },
+  'squat':         { cls:'a', name:'hold',       get:l=>{const v=Number(l.holdSec); return v>0?v:null;} },
+  'hang':          { cls:'a', name:'hang',       get:l=>{const v=Number(l.hangSec); return v>0?v:null;} },
+  'wall':          { cls:'a', name:'reps',       get:l=>{const v=Number(l.reps); return v>0?v:null;} },
+  'bio':           { cls:'b', name:'fatigue',    get:l=>{const v=Number(l.fatigue); return v>0?v:null;} },
+};
+function trendHTML(logs, t){
+  const sp = SPARKS[t]; if(!sp) return '';
+  const series = byType(logs,t).map(sp.get).filter(Number.isFinite).slice(0,7).reverse();
+  const svg = sparkSVG(series, sp.cls, sp.name);
+  if(!svg) return '';
+  const range = `<span class="muted spark-range">${Math.min(...series)}–${Math.max(...series)}</span>`;
+  return `<div class="trend">${svg}${range}</div>`;
+}
 function render(){
   const logs = load().sort((a,b)=>b.id-a.id);
   $('#stat-total').textContent = logs.length;
@@ -774,7 +858,14 @@ function render(){
   const recentDays = new Set();
   { const c = new Date(); for(let i=0;i<7;i++){ recentDays.add(todayISO(c)); c.setDate(c.getDate()-1); } }
   $('#stat-week').textContent = logs.filter(l=>recentDays.has(l.date)).length;
-  $('#today-suggest').innerHTML = suggest(logs);
+  const box = $('#today-suggest');
+  box.className = 'suggest hero';
+  if(!logs.length){ box.textContent = suggest(logs); }
+  else {
+    const d = decide(logs);
+    box.innerHTML = `<div class="hero-head"><span class="hero-date">${todayISO()}</span>`+
+      `<span class="pill state">${esc(d.rule.name)}</span></div>` + d.rule.say(d.ctx);
+  }
 
   const groups = [
     ['🧠 Neuro', ['neuro-morning','silence','heart']],
@@ -786,7 +877,7 @@ function render(){
       const l = logs.find(x=>x.type===t);
       const n = logs.filter(x=>x.type===t).length;
       if(!l) return `<div class="muted">· ${label(t)}: no logs yet</div>`;
-      return `<div style="margin:6px 0"><b>${label(t)}</b> <span class="muted">${esc(l.date)}${nudge(n)}</span><br><span class="muted">${esc(summarize(l))}</span></div>`;
+      return `<div style="margin:6px 0"><b>${label(t)}</b> <span class="muted">${esc(l.date)}${nudge(n)}</span><br><span class="muted">${esc(summarize(l))}</span>${trendHTML(logs,t)}</div>`;
     }).join('');
     return `<div class="subcard"><b>${g}</b>${rows}</div>`;
   }).join('');
