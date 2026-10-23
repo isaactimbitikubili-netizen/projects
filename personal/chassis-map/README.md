@@ -4,7 +4,9 @@ Single-file static app — no build step, no dependencies, no network. Open `ind
 directly, or use the `projects/.vscode/launch.json` launcher.
 
 Eight body baselines across three layers — nervous system → structure → biology — reduced to
-one decision per day: **Restore / Foundation / Rehydrate / Build**. Anti-spiral framing is a
+one decision per day, one of six states: **Restore today / Down-regulate today / Biology
+first / Foundation focus / Hydrate first / Build today** (first match wins, in that order;
+the Guide renders the tree from the same rules the app applies). Anti-spiral framing is a
 feature, not decoration: every metric is read as a 7+ log range, never a single verdict.
 
 Educational tool only, not medical advice.

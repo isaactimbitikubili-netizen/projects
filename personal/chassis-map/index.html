@@ -148,7 +148,7 @@
   <!-- Morning HRV/RHR -->
   <div class="subcard">
     <h3>A. Morning check — HRV / RHR on waking</h3>
-    <div class="principle">⚛️ <b>First principle:</b> HRV &amp; resting HR reflect sympathetic vs. parasympathetic balance. Trend matters, not one morning. A personal rise in RHR (~+7–10 bpm over your 7-day average) or HRV dip + fatigue = system asking for down-regulation, not intensity.</div>
+    <div class="principle">⚛️ <b>First principle:</b> HRV &amp; resting HR reflect sympathetic vs. parasympathetic balance. Trend matters, not one morning. A personal rise in RHR of ≥7 bpm over your 7 most recent mornings, or an HRV dip with fatigue, = system asking for down-regulation, not intensity.</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> single mornings are noisy (bad sleep, heat, dehydration, alcohol, late caffeine, illness). Never judge one reading. Need 7+ mornings. Same time, same position (sitting/lying), before phone/coffee.</div>
     <form id="form-neuro-morning">
       <div class="row">
@@ -242,7 +242,7 @@
 
   <div class="subcard">
     <h3>A. Blind single-leg stand — vestibular + proprioception</h3>
-    <div class="principle">⚛️ <b>First principle:</b> eyes closed removes vision; balance must come from inner ear + foot proprioceptors + cerebellum. Under ~15s suggests foot/ankle foundation work first. Test barefoot, safe space, arms crossed.</div>
+    <div class="principle">⚛️ <b>First principle:</b> eyes closed removes vision; balance must come from inner ear + foot proprioceptors + cerebellum. Your <b>weaker</b> side under 15s suggests foot/ankle foundation work first. Test barefoot, safe space, arms crossed.</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> time varies with fatigue, surface, shoes, illness, heat. Always test same conditions. Compare left vs. right and weekly range, not one wobble.</div>
     <div class="card" style="background:#060b14; margin:10px 0">
       <div class="timer" id="bal-timer">00:00</div>
@@ -272,7 +272,7 @@
 
   <div class="subcard">
     <h3>B. Deep primal squat — fascial elasticity + ankle dorsiflexion</h3>
-    <div class="principle">⚛️ <b>First principle:</b> heels-down deep squat tests posterior-chain fascial elasticity + ankle dorsiflexion + hip health. New baseline goal: <b>5 min</b> comfortable (v1 was 3 min — your old logs still count).</div>
+    <div class="principle">⚛️ <b>First principle:</b> heels-down deep squat tests posterior-chain fascial elasticity + ankle dorsiflexion + hip health. Baseline goal: <b>5 min</b> comfortable.</div>
     <div class="scrutiny">🔍 <b>Scrutiny cue:</b> depth and comfort change with warm-up, footwear, fatigue, ankle stiffness in the morning. Support (doorframe) is a valid progression, not cheating.</div>
     <div class="card" style="background:#060b14; margin:10px 0">
       <div class="timer" id="squat-timer">00:00</div>
@@ -396,7 +396,7 @@
     <h3>The stack (order matters)</h3>
     <ol class="tutor">
       <li><b>🧠 Neuro first:</b> morning RHR/HRV + stillness + interoception. If the nervous system is depleted, load causes <i>regression</i>. Prescription: down-regulate (slow exhale, walk, shade, sleep) before barbells.</li>
-      <li><b>🏗️ Structure second:</b> balance → squat → hang → wall angel. No 1RM until joints centre and feet sense the ground. Under ~15s blind stand = foot/ankle foundation. Short hang + shoulder pain = hang less, scap work more.</li>
+      <li><b>🏗️ Structure second:</b> balance → squat → hang → wall angel. No 1RM until joints centre and feet sense the ground. Weaker leg under 15s on a blind stand = foot/ankle foundation. Short hang + shoulder pain = hang less, scap work more.</li>
       <li><b>🌿 Biology always:</b> sleep + water + electrolytes + digestion. Equatorial rule: if fatigued, check hydration/minerals <i>before</i> fitness story.</li>
     </ol>
   </div>
@@ -414,13 +414,8 @@
 
   <div class="subcard">
     <h3>Decision tree — what do I do today?</h3>
-    <ol class="tutor">
-      <li>RHR +7–10 over your average <b>or</b> fatigue ≥7 <b>or</b> sick? → <b>Restore:</b> water + lytes, shade walk, early bed. No hard training. Log and release.</li>
-      <li>Otherwise, blind stand &lt;15s? → <b>Foundation:</b> barefoot balance + calf/ankle + short supported squats.</li>
-      <li>Otherwise, water &lt;2L in heat or no lytes + headache/fatigue? → <b>Rehydrate:</b> water + electrolytes / salty soup + fruit before training.</li>
-      <li>Otherwise → <b>Build:</b> practise one quality: squat depth, hang time, wall angels, or stillness.</li>
-    </ol>
-    <p class="muted">The Dashboard suggestion box applies this tree to your latest logs automatically.</p>
+    <ol class="tutor" id="guide-tree"><!-- rendered from DECISION_TREE --></ol>
+    <p class="muted">The Dashboard suggestion box applies this exact tree to your latest logs — first match wins, in this order. It is generated from the same rules, so this list can never disagree with what the app tells you.</p>
   </div>
 
   <div class="subcard">
@@ -458,7 +453,7 @@
   <p class="muted" id="history-empty">No logs yet — go log your first baseline.</p>
 </section>
 
-<footer>Single-file app · saves to localStorage · old squat/wall/heart logs preserved · educational only, not medical advice</footer>
+<footer>Single-file app · saves to localStorage · educational only, not medical advice</footer>
 
 <script>
 const KEY = 'chassis-map.v1';
@@ -473,6 +468,58 @@ function load(){ try{ const v = JSON.parse(localStorage.getItem(KEY)); return Ar
 function save(l){ try{ localStorage.setItem(KEY, JSON.stringify(l)); return null; }catch(err){ return err; } }
 function showFeedback(id, html){ const el=$(id); el.innerHTML=html; el.style.display='block'; }
 function esc(s){ return String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------------------------------------------------------------- constants
+   Every number the tool turns on lives here. The Guide's decision tree and the
+   dashboard's suggest() are both derived from DECISION_TREE, so the documented
+   rules and the executed rules cannot drift apart — edit here, both follow. */
+const THRESHOLDS = {
+  evidenceN: 7,          // most recent readings used as a baseline
+  evidenceMin: 3,        // prior readings required before any baseline claim is made
+  rhrRiseBpm: 7,         // hard trigger — prose must not imply a range the code does not use
+  stressLoad: 4,         // morning load, 1-5
+  fatigue: 7,            // 1-10 decision trigger
+  fatigueHint: 6,        // gentler nudge only, deliberately below the decision trigger
+  blindStandSec: 15,     // applied to the WEAKER side — say so wherever this is shown
+  waterL: 2,             // and requires heat above Mild
+  squatGoalSec: 300,
+  squatMilestoneSec: 180,
+  sleepQPoor: 4,
+  hangPainHigh: 6,
+  asymmetrySec: 5,
+};
+
+const DECISION_TREE = [
+  { id:'restore-rhr',
+    doc:`RHR ≥${THRESHOLDS.rhrRiseBpm} bpm above your ${THRESHOLDS.evidenceN} most recent mornings (needs ≥${THRESHOLDS.evidenceMin} readings) → <b>Restore today:</b> water + lytes, shade walk, early bed. No hard training.`,
+    when: c => !!(c.m && c.m.rhr && c.base && (Number(c.m.rhr)-c.base) >= THRESHOLDS.rhrRiseBpm),
+    say: c => `🔵 <b>Restore today.</b> Morning RHR ${esc(c.m.rhr)} vs recent ~${Math.round(c.base)} (+${Math.round(Number(c.m.rhr)-c.base)}). First principle: depleted system + load = regression. Water + lytes, shade walk, early bed. No hard session.${c.sleepH?` Last night ${esc(c.sleepH)}h — sleep debt explains much of a rise like this.`:''}` },
+
+  { id:'downregulate',
+    doc:`Otherwise, morning load ≥${THRESHOLDS.stressLoad}/5 → <b>Down-regulate today:</b> breath, walk, sleep before intensity. Structure can wait a day.`,
+    when: c => !!(c.m && Number(c.m.stress) >= THRESHOLDS.stressLoad),
+    say: c => `🔵 <b>Down-regulate today.</b> Load ${esc(c.m.stress)}/5 this morning. Breath, walk, sleep > intensity. Structure can wait a day.` },
+
+  { id:'biology',
+    doc:`Otherwise, fatigue ≥${THRESHOLDS.fatigue}/10 → <b>Biology first:</b> rehydrate, rest, protect tonight, retest tomorrow before deciding anything.`,
+    when: c => !!(c.b && Number(c.b.fatigue) >= THRESHOLDS.fatigue),
+    say: c => `🔵 <b>Biology first.</b> Fatigue ${esc(c.b.fatigue)}/10${c.b.water?`, water ${esc(c.b.water)}L, ${esc(c.b.lytes)} lytes`:''}${c.sleepH?`, sleep ${esc(c.sleepH)}h`:''}. Rehydrate + rest + protect sleep tonight; retest tomorrow before deciding anything.` },
+
+  { id:'foundation',
+    doc:`Otherwise, weaker leg under ${THRESHOLDS.blindStandSec}s eyes-closed → <b>Foundation focus:</b> barefoot balance, calf/ankle work, supported squats before load.`,
+    when: c => !!(c.bal && Math.min(Number(c.bal.leftSec),Number(c.bal.rightSec)) < THRESHOLDS.blindStandSec),
+    say: c => `🏗️ <b>Foundation focus.</b> Blind stand L ${esc(c.bal.leftSec)}s / R ${esc(c.bal.rightSec)}s — feet + ankles before load. Barefoot balance + calf work + supported squats today.` },
+
+  { id:'hydrate',
+    doc:`Otherwise, water under ${THRESHOLDS.waterL}L in heat above mild → <b>Hydrate first:</b> water + electrolytes, then train.`,
+    when: c => !!(c.b && c.b.water && Number(c.b.water) < THRESHOLDS.waterL && c.b.heat !== 'Mild'),
+    say: c => `💧 <b>Hydrate first.</b> ${esc(c.b.water)}L in ${esc(String(c.b.heat).toLowerCase())} heat is likely the bottleneck — water + electrolytes, then train.` },
+
+  { id:'build',
+    doc:`Otherwise → <b>Build today:</b> one quality only — stillness, squat depth, hang time, or wall angels. Clean and easy.`,
+    when: () => true,
+    say: c => `🟢 <b>Build today.</b> No red flags in latest logs. Pick ONE quality: stillness, depth, hang, or wall angels — easy + clean.${c.sleepH && Number(c.sleepH) < 6 ? ` <span class="muted">Last night ${esc(c.sleepH)}h — if today dips, check sleep before a fitness story.</span>` : ''}` },
+];
 
 /* Tabs */
 const TABS = ['dashboard','neuro','biomech','bio','guide','history'];
@@ -493,6 +540,9 @@ document.querySelectorAll('input[type="range"]').forEach(r=>{
 syncRangeLabels(document);
 
 document.querySelectorAll('input[type="date"]').forEach(i=>i.value=todayISO());
+
+/* The Guide's decision tree and suggest() are one object — render the prose from it. */
+$('#guide-tree').innerHTML = DECISION_TREE.map(r=>`<li>${r.doc}</li>`).join('');
 
 /* Timers — wall-clock based. setInterval ticks are throttled or paused when the screen is off,
    which is exactly how the 10-min silence sit is used; deriving from Date.now() keeps the
@@ -553,7 +603,7 @@ function priorValues(logs, t, key, n){
     .map(l=>Number(l[key])).filter(v=>v>0).slice(0, n);
 }
 function avg(a){ if(!a.length) return null; return a.reduce((s,v)=>s+v,0)/a.length; }
-function nudge(n){ return n<7 ? ` <span class="muted">(n=${n} — still early, keep collecting, no conclusions yet)</span>` : ` <span class="muted">(n=${n})</span>`; }
+function nudge(n){ return n<THRESHOLDS.evidenceN ? ` <span class="muted">(n=${n} — below the ${THRESHOLDS.evidenceN}+ that counts as a pattern; keep collecting, no conclusions yet)</span>` : ` <span class="muted">(n=${n})</span>`; }
 
 /* Forms */
 /* Strictly increasing ids: Date.now() alone can collide within one millisecond, and the old
@@ -588,15 +638,15 @@ function baseSave(formSel, type, coerce, feedback){
 baseSave('#form-neuro-morning','neuro-morning',
   f=>({ rhr:f.rhr?Number(f.rhr):null, hrv:f.hrv?Number(f.hrv):null, sleepH:f.sleepH?Number(f.sleepH):null, readiness:Number(f.readiness), stress:Number(f.stress) }),
   { fn:'#fb-neuro-morning', make:(f,all)=>{
-    const prior = priorValues(all,'neuro-morning','rhr',7);
+    const prior = priorValues(all,'neuro-morning','rhr',THRESHOLDS.evidenceN);
     const a = prior.length? avg(prior):null;
     let out = [`Logged ✓. Readiness ${esc(f.readiness)}/10, load ${esc(f.stress)}/5.`];
-    if(f.rhr && a && prior.length>=3){
+    if(f.rhr && a && prior.length>=THRESHOLDS.evidenceMin){
       const d = Number(f.rhr)-a;
-      if(d>=7) out.push(`🔵 RHR ${esc(f.rhr)} is ~${Math.round(d)} above your recent ~${Math.round(a)}. <b>What this does NOT mean:</b> you've lost fitness. <b>Likely context:</b> sleep debt, heat/dehydration, stress, illness onset. <b>Kind step:</b> restore today (water + lytes, easy walk, early bed), re-check after 2 good nights.`);
+      if(d>=THRESHOLDS.rhrRiseBpm) out.push(`🔵 RHR ${esc(f.rhr)} is ~${Math.round(d)} above your recent ~${Math.round(a)} (bar: ≥${THRESHOLDS.rhrRiseBpm} bpm). <b>What this does NOT mean:</b> you've lost fitness. <b>Likely context:</b> sleep debt, heat/dehydration, stress, illness onset. <b>Kind step:</b> restore today (water + lytes, easy walk, early bed), re-check after 2 good nights.`);
       else out.push(`🟢 RHR ${esc(f.rhr)} within your recent range (~${Math.round(a)}). No signal here — proceed as planned.`);
-    } else out.push(`🔵 Single readings are noise. After 7 mornings your average becomes the baseline to compare against.`);
-    if(Number(f.stress)>=4) out.push(`🧠 Load is ${esc(f.stress)}/5 — first principle says: down-regulate before load-bearing today.`);
+    } else out.push(`🔵 Single readings are noise. After ${THRESHOLDS.evidenceMin} mornings your average becomes a working baseline; ${THRESHOLDS.evidenceN}+ makes it a pattern worth acting on.`);
+    if(Number(f.stress)>=THRESHOLDS.stressLoad) out.push(`🧠 Load is ${esc(f.stress)}/5 — first principle says: down-regulate before load-bearing today.`);
     out.push(`<span class="muted">Metacognition: what else could explain today? Note it in context rather than deciding now.</span>`);
     return out.join('<br><br>');
   }});
@@ -626,9 +676,9 @@ baseSave('#form-balance','balance', f=>({ leftSec:Number(f.leftSec), rightSec:Nu
   { fn:'#fb-balance', make:(f)=>{
     const L=Number(f.leftSec), R=Number(f.rightSec), m=Math.min(L,R);
     let out=[`Logged ✓ L ${L}s · R ${R}s.`];
-    if(m<15) out.push(`🔵 Under ~15s on at least one side → first principle: prioritise foot/ankle foundation (barefoot stands, calf raises, short supported squats) before chasing load. <b>Not:</b> "bad balance" as identity.`);
-    else out.push(`🟢 Both ≥15s — foundation present. Work symmetry + rougher surfaces gradually.`);
-    if(Math.abs(L-R)>=5) out.push(`Asymmetry ≥5s — normal and trainable; give the shorter side one extra easy set.`);
+    if(m<THRESHOLDS.blindStandSec) out.push(`🔵 Weaker side ${m}s (under ${THRESHOLDS.blindStandSec}) → first principle: prioritise foot/ankle foundation (barefoot stands, calf raises, short supported squats) before chasing load. <b>Not:</b> "bad balance" as identity.`);
+    else out.push(`🟢 Both sides ≥${THRESHOLDS.blindStandSec}s — foundation present. Work symmetry + rougher surfaces gradually.`);
+    if(Math.abs(L-R)>=THRESHOLDS.asymmetrySec) out.push(`Asymmetry ≥${THRESHOLDS.asymmetrySec}s — normal and trainable; give the shorter side one extra easy set.`);
     out.push(`<span class="muted">Compare weekly ranges in same shoes/surface. One wobble = noise.</span>`);
     return out.join('<br><br>');
   }});
@@ -639,9 +689,9 @@ baseSave('#form-squat','squat', f=>({ holdSec:Number(f.holdSec), comfort:Number(
     if(f.fallBack==='yes') out.push(`🔵 Falling back → calves/Achilles + posterior chain asking for length. Try doorframe-supported holds + daily calf stretch.`);
     if(f.kneesCave==='yes') out.push(`🔵 Knees in → glute medius needs waking (clamshells, banded side-steps).`);
     if(f.heelsDown==='no') out.push(`🔵 Heels lift → ankle dorsiflexion limit. Heel-elevated squats, lower elevation over weeks.`);
-    if(s>=300) out.push(`🟢 5-min primal rest ✓ — maintain 2–3×/week.`);
-    else if(s>=180) out.push(`🟢 3-min achieved (${s}s) — v1 goal ✓. New baseline 5 min (${Math.round(s/300*100)}%). Add ~10–15s/week.`);
-    else out.push(`⏱ ${s}s / 300s (${Math.round(s/300*100)}%). Small adds weekly; support is valid progression.`);
+    if(s>=THRESHOLDS.squatGoalSec) out.push(`🟢 ${THRESHOLDS.squatGoalSec/60}-min primal rest ✓ — maintain 2–3×/week.`);
+    else if(s>=THRESHOLDS.squatMilestoneSec) out.push(`🟢 ${THRESHOLDS.squatMilestoneSec/60}-min milestone reached (${s}s). New baseline ${THRESHOLDS.squatGoalSec/60} min (${Math.round(s/THRESHOLDS.squatGoalSec*100)}%). Add ~10–15s/week.`);
+    else out.push(`⏱ ${s}s / ${THRESHOLDS.squatGoalSec}s (${Math.round(s/THRESHOLDS.squatGoalSec*100)}%). Small adds weekly; support is valid progression.`);
     return out.join('<br><br>');
   }});
 
@@ -650,7 +700,7 @@ baseSave('#form-hang','hang', f=>({ hangSec:Number(f.hangSec), pain:Number(f.pai
     const s=Number(f.hangSec); let out=[`Logged ✓ ${s}s.`];
     if(f.grip==='slipped') out.push(`🔵 Grip gave out first — expected limiter; it improves fast with frequent short hangs (grease-the-groove) + rest.`);
     if(f.grip==='shoulder') out.push(`🔵 Stopped for shoulder — respect that stop. Shorter active hangs (shoulders away from ears) + scap pulls before max attempts. Sharp pain → clinician, not more hangs.`);
-    if(Number(f.pain)>=6) out.push(`🔵 Discomfort ${esc(f.pain)}/10 is high — shorten next hangs, prioritise wall angels + rest.`);
+    if(Number(f.pain)>=THRESHOLDS.hangPainHigh) out.push(`🔵 Discomfort ${esc(f.pain)}/10 is high (bar ${THRESHOLDS.hangPainHigh}) — shorten next hangs, prioritise wall angels + rest.`);
     else out.push(`<span class="muted">Forearm burn = expected. Joint pain = stop signal. Log bar type — thick/sweaty bars read shorter.</span>`);
     return out.join('<br><br>');
   }});
@@ -669,9 +719,9 @@ baseSave('#form-bio','bio', f=>({ sleepH:f.sleepH?Number(f.sleepH):null, sleepQ:
   { fn:'#fb-bio', make:(f)=>{
     let out=[];
     const w = f.water?Number(f.water):null;
-    if(w!==null && w<2 && f.heat!=='Mild') out.push(`🔵 ${esc(f.water)}L + ${esc(f.heat.toLowerCase())} heat — likely under-hydrated for equatorial sweat. +0.5–1L + electrolytes/salty food + fruit before judging any performance.`);
-    if(f.lytes==='no' && (Number(f.fatigue)>=6)) out.push(`🔵 Fatigue ${esc(f.fatigue)}/10 without minerals — try electrolytes / salty soup + fruit today as the smallest test.`);
-    if(Number(f.sleepQ)<=4) out.push(`🔵 Sleep quality ${esc(f.sleepQ)}/10 — expect everything else to read lower today. Protect tonight (cool, dark, earlier, no late caffeine/heavy meal).`);
+    if(w!==null && w<THRESHOLDS.waterL && f.heat!=='Mild') out.push(`🔵 ${esc(f.water)}L + ${esc(f.heat.toLowerCase())} heat (bar ${THRESHOLDS.waterL}L) — likely under-hydrated for equatorial sweat. +0.5–1L + electrolytes/salty food + fruit before judging any performance.`);
+    if(f.lytes==='no' && (Number(f.fatigue)>=THRESHOLDS.fatigueHint)) out.push(`🔵 Fatigue ${esc(f.fatigue)}/10 without minerals — try electrolytes / salty soup + fruit today as the smallest test.`);
+    if(Number(f.sleepQ)<=THRESHOLDS.sleepQPoor) out.push(`🔵 Sleep quality ${esc(f.sleepQ)}/10 — expect everything else to read lower today. Protect tonight (cool, dark, earlier, no late caffeine/heavy meal).`);
     if(!out.length) out.push(`🟢 Biology basics covered today. If fatigued anyway, check heat + digestion + illness before fitness stories.`);
     out.push(`<span class="muted">Equatorial rule: water → lytes → shade/rest → sleep. Train hard only after these.</span>`);
     return out.join('<br><br>');
@@ -694,23 +744,17 @@ function summarize(l){
   return esc(l.notes||'');
 }
 
-/* Dashboard suggestion (decision tree) */
+/* Dashboard suggestion — walks DECISION_TREE in order; the last rule always matches. */
 function suggest(logs){
+  if(!logs.length) return `Log a few baselines and I'll suggest where to focus today.`;
   const m = byType(logs,'neuro-morning')[0];
   const b = byType(logs,'bio')[0];
   const bal = byType(logs,'balance')[0];
-  if(!logs.length) return `Log a morning check + one movement baseline to unlock today's suggestion.`;
-  // RHR elevation check needs history — compare today against the 7 most recent PRIOR mornings
-  const priorRHR = priorValues(logs,'neuro-morning','rhr',7);
-  if(m && m.rhr && priorRHR.length>=3){
-    const base = avg(priorRHR);
-    if(base && (Number(m.rhr)-base)>=7) return `🔵 <b>Restore today.</b> Morning RHR ${esc(m.rhr)} vs recent ~${Math.round(base)} (+${Math.round(Number(m.rhr)-base)}). First principle: depleted system + load = regression. Water + lytes, shade walk, early bed. No hard session.`;
-  }
-  if(m && Number(m.stress)>=4) return `🔵 <b>Down-regulate today.</b> Load ${esc(m.stress)}/5 this morning. Breath, walk, sleep > intensity. Structure can wait a day.`;
-  if(b && (Number(b.fatigue)>=7)) return `🔵 <b>Biology first.</b> Fatigue ${esc(b.fatigue)}/10${b.water?`, water ${esc(b.water)}L, ${esc(b.lytes)} lytes`:''}. Rehydrate + rest + protect sleep tonight; retest tomorrow before deciding anything.`;
-  if(bal && Math.min(Number(bal.leftSec),Number(bal.rightSec))<15) return `🏗️ <b>Foundation focus.</b> Blind stand L ${esc(bal.leftSec)}s / R ${esc(bal.rightSec)}s — feet + ankles before load. Barefoot balance + calf work + supported squats today.`;
-  if(b && b.water && Number(b.water)<2 && b.heat!=='Mild') return `💧 <b>Hydrate first.</b> ${esc(b.water)}L in ${esc(String(b.heat).toLowerCase())} heat is likely the bottleneck — water + electrolytes, then train.`;
-  return `🟢 <b>Build today.</b> No red flags in latest logs. Pick ONE quality: stillness, depth, hang, or wall angels — easy + clean.`;
+  const priorRHR = priorValues(logs,'neuro-morning','rhr',THRESHOLDS.evidenceN);
+  const base = priorRHR.length >= THRESHOLDS.evidenceMin ? avg(priorRHR) : null;
+  const sleepH = (m && m.sleepH) || (b && b.sleepH) || null;
+  const ctx = { m, b, bal, base, sleepH };
+  return DECISION_TREE.find(r => r.when(ctx)).say(ctx);
 }
 
 /* Render */
@@ -799,7 +843,11 @@ $('#export-fortnight').onclick=()=>{
     if(tests.length) lines.push('- **Tests:** '+tests.join(' · '));
     const bio=ls.filter(l=>l.type==='bio').sort((a,b)=>b.id-a.id)[0];
     if(bio){
-      const b=[]; if(bio.water)b.push('water '+bio.water+'L'); if(bio.lytes)b.push('lytes '+bio.lytes); if(bio.fatigue)b.push('fatigue '+bio.fatigue+'/10'); if(bio.gut)b.push('gut '+bio.gut); if(bio.heat)b.push('heat '+bio.heat);
+      // 'rest-q' deliberately avoids the word "sleep": daily_log.py's _strip_sleep drops any
+      // ·-segment matching /sleep/ because the paper line owns sleep DURATION. Sleep QUALITY
+      // has no paper counterpart, so it rides under a name the strip keeps. Renaming it to
+      // 'sleepQ' would silently lose it on every merge.
+      const b=[]; if(bio.water)b.push('water '+bio.water+'L'); if(bio.lytes)b.push('lytes '+bio.lytes); if(bio.fatigue)b.push('fatigue '+bio.fatigue+'/10'); if(bio.sleepQ)b.push('rest-q '+bio.sleepQ+'/10'); if(bio.gut)b.push('gut '+bio.gut); if(bio.heat)b.push('heat '+bio.heat);
       if(b.length) lines.push('- **Bio:** '+b.join(' · '));
     }
     const notes=ls.map(l=>l.notes).filter(Boolean);
