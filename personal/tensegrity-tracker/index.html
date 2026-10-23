@@ -464,9 +464,13 @@
 const KEY = 'tensegrityLogs.v1';
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
-const todayISO = () => new Date().toISOString().slice(0,10);
+/* Local calendar date (toISOString is UTC — in UTC+3 it returns yesterday between 00:00–03:00). */
+const todayISO = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+/* Parse YYYY-MM-DD as a local midnight, matching todayISO — new Date(str) parses UTC. */
+function parseDate(s){ const [y,m,d]=String(s).split('-').map(Number); return new Date(y,(m||1)-1,d||1); }
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch{ return []; } }
-function save(l){ localStorage.setItem(KEY, JSON.stringify(l)); }
+/* Returns null on success, the Error on failure — callers must surface it, never lose the entry silently. */
+function save(l){ try{ localStorage.setItem(KEY, JSON.stringify(l)); return null; }catch(err){ return err; } }
 function showFeedback(id, html){ const el=$(id); el.innerHTML=html; el.style.display='block'; }
 function esc(s){ return String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
@@ -479,24 +483,31 @@ $$('nav button').forEach(b=>b.addEventListener('click',()=>{
   if(['dashboard','history'].includes(b.dataset.tab)) render();
 }));
 
-/* Range labels */
-[['#nm-ready','#nm-ready-val'],['#sil-urge','#sil-urge-val'],
- ['#heart-rest','#heart-rest-val'],['#heart-post','#heart-post-val'],
- ['#squat-comfort','#squat-comfort-val'],['#wall-pain','#wall-pain-val'],
- ['#hang-pain','#hang-pain-val'],['#bio-sq','#bio-sq-val'],['#bio-fat','#bio-fat-val']
-].forEach(([a,b])=>{ const el=$(a); if(el) el.addEventListener('input',e=>$(b).textContent=e.target.value); });
+/* Range labels: wire generically from input id -> `${id}-val`, and seed each label from its
+   input's current value so a label can never disagree with its slider at load. */
+const rangeOut = r => document.getElementById(r.id+'-val');
+function syncRangeLabels(root){ root.querySelectorAll('input[type="range"]').forEach(r=>{ const o=rangeOut(r); if(o) o.textContent=r.value; }); }
+document.querySelectorAll('input[type="range"]').forEach(r=>{
+  r.addEventListener('input', ()=>{ const o=rangeOut(r); if(o) o.textContent=r.value; });
+});
+syncRangeLabels(document);
 
 document.querySelectorAll('input[type="date"]').forEach(i=>i.value=todayISO());
 
-/* Timers */
+/* Timers — wall-clock based. setInterval ticks are throttled or paused when the screen is off,
+   which is exactly how the 10-min silence sit is used; deriving from Date.now() keeps the
+   reading honest, and a visibilitychange resync repaints the moment the screen returns. */
+const fmtMS = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.max(0,s%60)).padStart(2,'0')}`;
 function mkCountUp(ids){
-  let iv=null, sec=0;
-  const draw=()=>{ const m=String(Math.floor(sec/60)).padStart(2,'0'), s=String(sec%60).padStart(2,'0'); $(ids.d).textContent=`${m}:${s}`; };
-  $(ids.start).onclick=()=>{ clearInterval(iv); iv=setInterval(()=>{sec++; draw();},1000); };
-  $(ids.stop).onclick=()=>clearInterval(iv);
-  $(ids.reset).onclick=()=>{ clearInterval(iv); sec=0; draw(); };
+  let iv=null, sec=0, startedAt=null;
+  const elapsed = ()=> sec + (startedAt!==null ? Math.floor((Date.now()-startedAt)/1000) : 0);
+  const draw = ()=>{ $(ids.d).textContent = fmtMS(elapsed()); };
+  $(ids.start).onclick = ()=>{ if(startedAt===null) startedAt = Date.now(); clearInterval(iv); iv=setInterval(draw,250); draw(); };
+  $(ids.stop).onclick  = ()=>{ clearInterval(iv); iv=null; if(startedAt!==null){ sec=elapsed(); startedAt=null; } draw(); };
+  $(ids.reset).onclick = ()=>{ clearInterval(iv); iv=null; startedAt=null; sec=0; draw(); };
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) draw(); });
   draw();
-  return { get:()=>sec };
+  return { get:()=>elapsed() };
 }
 const sqT = mkCountUp({d:'#squat-timer',start:'#squat-start',stop:'#squat-stop',reset:'#squat-reset'});
 $('#squat-use').onclick=()=>{ document.querySelector('#form-squat [name="holdSec"]').value=sqT.get(); };
@@ -507,11 +518,24 @@ const hangT = mkCountUp({d:'#hang-timer',start:'#hang-start',stop:'#hang-stop',r
 $('#hang-use').onclick=()=>{ document.querySelector('#form-hang [name="hangSec"]').value=hangT.get(); };
 
 function mkCountDown(d, start, reset, total){
-  let iv=null, sec=total;
-  const draw=()=>{ const m=String(Math.floor(sec/60)).padStart(2,'0'), s=String(sec%60).padStart(2,'0'); $(d).textContent=`${m}:${s}`; };
-  $(start).onclick=()=>{ clearInterval(iv); if(sec<=0) sec=total; iv=setInterval(()=>{ if(sec>0){sec--; draw();} if(sec===0){clearInterval(iv); $(d).textContent='Done ✓ — note what you felt';} },1000); };
-  $(reset).onclick=()=>{ clearInterval(iv); sec=total; draw(); };
-  draw();
+  let iv=null, target=null, remain=total;
+  const done = ()=>{ clearInterval(iv); iv=null; target=null; remain=0; $(d).textContent='Done ✓ — note what you felt'; };
+  const tick = ()=>{
+    if(target===null) return;
+    const left = Math.ceil((target-Date.now())/1000);
+    if(left<=0){ done(); return; }
+    remain = left; $(d).textContent = fmtMS(left);
+  };
+  $(start).onclick = ()=>{
+    clearInterval(iv); iv=null;
+    if(remain<=0) remain = total;
+    target = Date.now() + remain*1000;
+    tick();
+    iv = setInterval(tick, 250);
+  };
+  $(reset).onclick = ()=>{ clearInterval(iv); iv=null; target=null; remain=total; $(d).textContent = fmtMS(total); };
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && target!==null) tick(); });
+  $(d).textContent = fmtMS(total);
 }
 mkCountDown('#heart-timer','#heart-start','#heart-reset',120);
 mkCountDown('#silence-timer','#silence-start','#silence-reset',600);
@@ -521,17 +545,40 @@ $('#spiral-btn').onclick=()=>$('#spiral-walk').classList.toggle('hidden');
 
 /* Helpers */
 function byType(logs,t){ return logs.filter(l=>l.type===t).sort((a,b)=>b.id-a.id); }
+/* byType returns NEWEST-FIRST, so the most recent readings are at the head. `.slice(-n)` would
+   take the n OLDEST — that silently froze the baseline on early history once logs passed ~8.
+   This returns the n most recent values, excluding the newest entry (the one being judged). */
+function priorValues(logs, t, key, n){
+  return byType(logs, t).slice(1)
+    .map(l=>Number(l[key])).filter(v=>v>0).slice(0, n);
+}
 function avg(a){ if(!a.length) return null; return a.reduce((s,v)=>s+v,0)/a.length; }
 function nudge(n){ return n<7 ? ` <span class="muted">(n=${n} — still early, keep collecting, no conclusions yet)</span>` : ` <span class="muted">(n=${n})</span>`; }
 
 /* Forms */
+/* Strictly increasing ids: Date.now() alone can collide within one millisecond, and the old
+   `+random(999)` jitter let sort-by-id misorder entries. Anchoring on the stored max keeps
+   byType's newest-first sort exact and makes deletion by id unambiguous. */
+let lastId = 0;
+function nextId(logs){
+  let max = lastId;
+  for(const l of logs) if(Number(l.id) > max) max = Number(l.id);
+  lastId = max + 1;
+  return lastId;
+}
 function baseSave(formSel, type, coerce, feedback){
   $(formSel).addEventListener('submit', e=>{
     e.preventDefault();
     const f = Object.fromEntries(new FormData(e.target).entries());
     const logs = load();
-    logs.push({ id: Date.now()+Math.floor(Math.random()*999), type, ...f, ...coerce(f) });
-    save(logs); e.target.reset();
+    logs.push({ id: nextId(logs), type, ...f, ...coerce(f) });
+    const err = save(logs);
+    if(err){
+      showFeedback(feedback.fn, `<b>⚠ Not saved.</b> Browser storage is full or blocked (${esc(err && err.name ? err.name : err)}). This entry was NOT stored — export to back up what you have, then free space or allow storage for this page.`);
+      return;
+    }
+    e.target.reset();
+    syncRangeLabels(e.target);   // reset() restores slider defaults but leaves labels stale
     document.querySelector(formSel+' [name="date"]').value = todayISO();
     showFeedback(feedback.fn, feedback.make(f, logs));
     render();
@@ -541,7 +588,7 @@ function baseSave(formSel, type, coerce, feedback){
 baseSave('#form-neuro-morning','neuro-morning',
   f=>({ rhr:f.rhr?Number(f.rhr):null, hrv:f.hrv?Number(f.hrv):null, sleepH:f.sleepH?Number(f.sleepH):null, readiness:Number(f.readiness), stress:Number(f.stress) }),
   { fn:'#fb-neuro-morning', make:(f,all)=>{
-    const prior = byType(all,'neuro-morning').map(l=>l.rhr).filter(v=>v>0).slice(-7);
+    const prior = priorValues(all,'neuro-morning','rhr',7);
     const a = prior.length? avg(prior):null;
     let out = [`Logged ✓. Readiness ${esc(f.readiness)}/10, load ${esc(f.stress)}/5.`];
     if(f.rhr && a && prior.length>=3){
@@ -653,10 +700,10 @@ function suggest(logs){
   const b = byType(logs,'bio')[0];
   const bal = byType(logs,'balance')[0];
   if(!logs.length) return `Log a morning check + one movement baseline to unlock today's suggestion.`;
-  const msgs = byType(logs,'neuro-morning').map(l=>l.rhr).filter(v=>v>0).slice(-8);
-  // RHR elevation check needs history
-  if(m && m.rhr && msgs.length>=4){
-    const base = avg(msgs.slice(0,-1));
+  // RHR elevation check needs history — compare today against the 7 most recent PRIOR mornings
+  const priorRHR = priorValues(logs,'neuro-morning','rhr',7);
+  if(m && m.rhr && priorRHR.length>=3){
+    const base = avg(priorRHR);
     if(base && (Number(m.rhr)-base)>=7) return `🔵 <b>Restore today.</b> Morning RHR ${esc(m.rhr)} vs recent ~${Math.round(base)} (+${Math.round(Number(m.rhr)-base)}). First principle: depleted system + load = regression. Water + lytes, shade walk, early bed. No hard session.`;
   }
   if(m && Number(m.stress)>=4) return `🔵 <b>Down-regulate today.</b> Load ${esc(m.stress)}/5 this morning. Breath, walk, sleep > intensity. Structure can wait a day.`;
@@ -670,13 +717,19 @@ function suggest(logs){
 function render(){
   const logs = load().sort((a,b)=>b.id-a.id);
   $('#stat-total').textContent = logs.length;
-  const days=[...new Set(logs.map(l=>l.date))].sort();
-  let streak=0; let d=new Date();
-  if(days.includes(todayISO())||(days.length&&(new Date()-new Date(days[days.length-1]))/864e5<2)){
-    while(days.includes(d.toISOString().slice(0,10))){ streak++; d.setDate(d.getDate()-1); }
+  const daySet = new Set(logs.map(l=>l.date));
+  const lastDay = logs.length ? logs.map(l=>l.date).sort().pop() : null;
+  const stale = !lastDay || (Date.now()-parseDate(lastDay).getTime())/864e5 >= 2;
+  let streak = 0;
+  if(!stale){
+    const cur = new Date();
+    if(!daySet.has(todayISO())) cur.setDate(cur.getDate()-1);   // today not logged yet — don't zero the run
+    while(daySet.has(todayISO(cur))){ streak++; cur.setDate(cur.getDate()-1); }
   }
   $('#stat-streak').textContent = streak+' 🔥';
-  $('#stat-week').textContent = logs.filter(l=>(Date.now()-new Date(l.date).getTime())/864e5<8).length;
+  const recentDays = new Set();
+  { const c = new Date(); for(let i=0;i<7;i++){ recentDays.add(todayISO(c)); c.setDate(c.getDate()-1); } }
+  $('#stat-week').textContent = logs.filter(l=>recentDays.has(l.date)).length;
   $('#today-suggest').innerHTML = suggest(logs);
 
   const groups = [
@@ -698,7 +751,11 @@ function render(){
   $('#history-body').innerHTML = rows.map(l=>`<tr><td>${esc(l.date)}</td><td><span class="pill ${esc(l.type)}">${esc(label(l.type))}</span></td><td>${esc(summarize(l))}</td><td><button class="btn danger" onclick="delLog(${l.id})">✕</button></td></tr>`).join('');
   $('#history-empty').style.display = rows.length?'none':'block';
 }
-window.delLog = id=>{ save(load().filter(l=>l.id!==id)); render(); };
+window.delLog = id=>{
+  const err = save(load().filter(l=>l.id!==id));
+  if(err) return alert('Could not delete — storage blocked or full ('+(err&&err.name?err.name:err)+').');
+  render();
+};
 
 $('#export-csv').onclick=()=>{
   const logs=load(); if(!logs.length) return alert('No logs to export.');
@@ -756,7 +813,12 @@ $('#export-fortnight').onclick=()=>{
   showStamp();
 };
 function dl(c,n,t){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([c],{type:t})); a.download=n; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
-$('#clear-all').onclick=()=>{ if(confirm('Delete ALL logs?')){ localStorage.removeItem(KEY); render(); } };
+$('#clear-all').onclick=()=>{
+  if(!confirm('Delete ALL logs?')) return;
+  try{ localStorage.removeItem(KEY); localStorage.removeItem('trackerExport.v1'); }
+  catch(err){ return alert('Could not clear storage ('+(err&&err.name?err.name:err)+').'); }
+  render(); showStamp();   // the old export stamp referred to data that no longer exists
+};
 
 render();
 showStamp();
