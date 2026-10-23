@@ -11,17 +11,16 @@ Educational tool only, not medical advice.
 
 ## Data
 
-- **Storage:** browser `localStorage`, key `chassis-map.v1`.
-- **Legacy key** `tensegrityLogs.v1` (pre-rename) is still read as a fallback and migrated
-  forward on load. `Clear all` removes both. Once every device has opened the app and
-  confirmed its history, the legacy key can be dropped.
+- **Storage:** browser `localStorage`, single key `chassis-map.v1`.
+- **Clean slate (2026-10-24):** the pre-rename key `tensegrityLogs.v1` and its migration
+  fallback were discarded — no compatibility layer, no read-through. History starts empty.
 - **There is no other copy.** Clearing site data loses everything that has not been exported.
 
-### Durability (current status: exposed)
+### Durability (status: exposed)
 
-No `tracker-fortnight-*` file exists anywhere on disk. The dataset has never been durably
-copied — only a `tensegrity-log.csv` was ever produced and it now sits in the trash.
-Export before anything else; the export is the first action, always.
+`localStorage` is the only place this data exists — it is origin-scoped, clearable by a
+single "clear browsing data" action, and invisible to git and Syncthing. Export after any
+session worth keeping; the export is the first action, always.
 
 ## Export → vault
 
