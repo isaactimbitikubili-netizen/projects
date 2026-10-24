@@ -25,6 +25,9 @@ Usage:
   python3 daily_log.py --show                   # print current ledger block
   python3 daily_log.py --paper                  # print printable paper table
   python3 daily_log.py --serve [--port 8000]    # browser UI mirroring paper, Submit injects
+                                                #   /merge: paste a tracker export, folds it in
+                                                #           (dry-run checkbox ON by default)
+                                                #   /tracker: serves the Chassis Map app
 
 Paper: fill ~07:00, zero math, day number only. Digitize in a 7-day batch.
 Stdlib only.
@@ -40,6 +43,7 @@ from pathlib import Path
 from urllib.parse import parse_qs
 
 LEDGER_PATH = Path("/home/step1/workspace/vault/Logs/fortnight-performance-log.md")
+TRACKER_APP_PATH = Path(__file__).resolve().parent.parent / "chassis-map" / "index.html"
 START_MARK = "<!-- LEDGER START -->"
 END_MARK = "<!-- LEDGER END -->"
 LEDGER_DATE_RE = re.compile(r"^### (\d{4}-\d{2}-\d{2})$")
@@ -535,7 +539,7 @@ function upd(){
 }
 f.addEventListener('input',upd);upd();
 </script>
-<p class="muted"><a href="/lines">View current ledger blocks</a></p>
+<p class="muted"><a href="/lines">View current ledger blocks</a> · <a href="/merge">Merge a tracker export</a> · <a href="/tracker">Tracker app</a></p>
 </body></html>"""
 
 def _default_date() -> str:
@@ -544,6 +548,45 @@ def _default_date() -> str:
 def render_page(msg: str = "", date: str = "") -> str:
     # NOTE: plain .replace, NOT str.format — the CSS is full of {braces}.
     return PAGE.replace("%%MSG%%", msg).replace("%%DATE%%", html.escape(date))
+
+MERGE_PAGE = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Merge tracker export</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:16px;line-height:1.45}
+.muted{opacity:.7;font-size:.88rem}
+label{font-weight:650;font-size:.9rem;display:block;margin:12px 0 4px}
+textarea{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #888;background:inherit;color:inherit;font-size:.85rem;min-height:200px;font-family:ui-monospace,monospace}
+button{margin-top:12px;padding:13px;border:0;border-radius:12px;font-weight:750;font-size:1rem;cursor:pointer;background:#0e7c66;color:#fff}
+.ok{background:#0e3d33;border:1px solid #0e7c66;border-radius:10px;padding:12px}
+.err{background:#3d1515;border:1px solid #a33;border-radius:10px;padding:12px}
+pre{background:#0003;border:1px solid #8883;border-radius:10px;padding:12px;white-space:pre-wrap;overflow-x:auto}
+a{color:#0e7c66}
+</style></head><body>
+<h1>Merge tracker export → ledger</h1>
+<div class="muted">Paste the raw markdown of a <code>tracker-fortnight-*.md</code> export (the
+<a href="/tracker">Chassis Map app</a>'s Fortnight export, or the file it downloads). Days land
+between the LEDGER markers, prefixed <code>[tracker]</code>; sleep tokens are stripped there —
+the paper line owns sleep duration — while sleep quality rides in as <code>rest-q</code>.
+Run the dry-run first, then uncheck and resubmit to write.</div>
+%%MSG%%
+<form method="post" action="/merge">
+<label class="muted"><input type="checkbox" name="dry" value="1" checked> Dry-run — report only, write nothing</label>
+<label for="tracker">Tracker export markdown (### YYYY-MM-DD sections)</label>
+<textarea id="tracker" name="tracker" rows="14" placeholder="# Tracker export — generated 2026-10-24&#10;&#10;### 2026-10-24&#10;- **Vitals:** rhr 62 · hrv 71 · readiness 6/10&#10;- **Bio:** water 2.5L · fatigue 4/10 · rest-q 5/10"></textarea>
+<button type="submit">Merge →</button>
+</form>
+<p class="muted"><a href="/">← daily log</a> · <a href="/lines">ledger blocks</a></p>
+<p class="muted">Note: the tracker app served at <code>/tracker</code> runs on this port's
+origin and keeps its own separate localStorage — history logged while opening
+<code>index.html</code> from disk stays in that other origin and is not shared.</p>
+</body></html>"""
+
+def render_merge_page(msg: str = "", tracker: str = "") -> str:
+    # echo the paste back so a failed/dry merge can be fixed without re-copying;
+    # capped so a runaway paste cannot balloon the response
+    echo = tracker if len(tracker) <= 100_000 else ""
+    return MERGE_PAGE.replace("%%MSG%%", msg).replace("%%TRACKER%%", html.escape(echo))
 
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -561,6 +604,17 @@ class Handler(BaseHTTPRequestHandler):
         if new_text != text:
             LEDGER_PATH.write_text(new_text, encoding="utf-8")
         return status
+    def _tracker_merge(self, d: dict) -> str:
+        raw = d.get("tracker", "")
+        if len(raw) > 1_000_000:
+            return '<div class="err">✗ too large — a fortnight export is a few KB. Did you paste the wrong file?</div>'
+        text = read_ledger()
+        new_text, report = _apply_merge(text, raw)
+        if d.get("dry") == "1":
+            return f'<div class="ok">DRY-RUN — nothing written.<pre>{html.escape(report)}</pre></div>'
+        if new_text != text:
+            LEDGER_PATH.write_text(new_text, encoding="utf-8")
+        return f'<div class="ok">✓ written<pre>{html.escape(report)}</pre></div>'
     def do_GET(self):
         if self.path == "/lines":
             try:
@@ -569,11 +623,24 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(body)
             except Exception as e:
                 return self._send(f"<p>Error: {html.escape(str(e))}</p>", 500)
+        if self.path == "/merge":
+            return self._send(render_merge_page())
+        if self.path == "/tracker":
+            try:
+                return self._send(TRACKER_APP_PATH.read_text(encoding="utf-8"))
+            except Exception as e:
+                return self._send(f"<p>Tracker app not found at <code>{html.escape(str(TRACKER_APP_PATH))}</code>: {html.escape(str(e))}</p><p><a href=\"/\">← back</a></p>", 500)
         return self._send(render_page("", _default_date()))
     def do_POST(self):
         n = int(self.headers.get("Content-Length", 0))
         data = parse_qs(self.rfile.read(n).decode(), keep_blank_values=True)
         d = {k: (v[0] if v else "") for k, v in data.items()}
+        if self.path == "/merge":
+            try:
+                msg = self._tracker_merge(d)
+            except Exception as e:
+                msg = f'<div class="err">✗ {html.escape(str(e))}</div>'
+            return self._send(render_merge_page(msg, d.get("tracker", "")))
         if self.path == "/batch":
             try:
                 text = read_ledger()
