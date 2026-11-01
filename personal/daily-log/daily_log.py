@@ -573,7 +573,7 @@ Run the dry-run first, then uncheck and resubmit to write.</div>
 <form method="post" action="/merge">
 <label class="muted"><input type="checkbox" name="dry" value="1" checked> Dry-run — report only, write nothing</label>
 <label for="tracker">Tracker export markdown (### YYYY-MM-DD sections)</label>
-<textarea id="tracker" name="tracker" rows="14" placeholder="# Tracker export — generated 2026-10-24&#10;&#10;### 2026-10-24&#10;- **Vitals:** rhr 62 · hrv 71 · readiness 6/10&#10;- **Bio:** water 2.5L · fatigue 4/10 · rest-q 5/10"></textarea>
+<textarea id="tracker" name="tracker" rows="14" placeholder="# Tracker export — generated 2026-10-24&#10;&#10;### 2026-10-24&#10;- **Vitals:** rhr 62 · hrv 71 · readiness 6/10&#10;- **Bio:** water 2.5L · fatigue 4/10 · rest-q 5/10">%%TRACKER%%</textarea>
 <button type="submit">Merge →</button>
 </form>
 <p class="muted"><a href="/">← daily log</a> · <a href="/lines">ledger blocks</a></p>

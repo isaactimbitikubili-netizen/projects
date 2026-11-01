@@ -24,6 +24,11 @@ Educational tool only, not medical advice.
 single "clear browsing data" action, and invisible to git and Syncthing. Export after any
 session worth keeping; the export is the first action, always.
 
+The bridge: `python3 daily_log.py --serve` (from `projects/personal/daily-log/`) serves
+`/merge` (paste a fortnight export; dry-run is on by default) and `/tracker` (the app at
+that port's origin). That closes the manual download-and-CLI step; the ledger stays the
+durable copy. Tested only against a scratch ledger + dry-run.
+
 ## Export → vault
 
 `📋 Fortnight export` downloads `tracker-fortnight-YYYY-MM-DD.md`, which feeds the single
