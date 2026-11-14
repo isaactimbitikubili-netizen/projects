@@ -411,7 +411,8 @@ def cmd_stats(args) -> int:
     statuses = Counter(d["status"] for d in decisions.values())
     for name in STATUSES:
         print(f"  {statuses.get(name, 0):5d}  {name}")
-    print(f"  {sum(1 for r in rows if r['id'] not in decisions):5d}  untriaged")
+    print(f"  {sum(1 for r in rows if r.get('duplicate_of')):5d}  duplicate copies")
+    print(f"  {sum(1 for r in rows if r['id'] not in decisions and not r.get('duplicate_of')):5d}  untriaged")
     return 0
 
 
